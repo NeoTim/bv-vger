@@ -14,15 +14,19 @@
 
 ## Overview
 
-Vger is using the [Serverless Framework](https://serverless.com/framework/docs/providers/aws/guide/installation/) (v1.23.0) to automate packaging and deployment of all lambda functions. The default lambda packaging can sometimes fail due to the difference in runtime environment (EC2 instance) vs the development environment (Mac OS). To overcome this issue, we are using the [_serverless-package-python-functions_](https://www.npmjs.com/package/serverless-package-python-functions) plugin which will assist in downloading the required libraries from a [Docker image](https://hub.docker.com/r/lambci/lambda/) that closely resembles the EC2 instance environment.
+Vger is using the [Serverless Framework](https://serverless.com/framework/docs/providers/aws/guide/installation/) (v1.23.0) to automate packaging and deployment of all lambda functions. 
+The default lambda packaging can sometimes fail due to the difference in runtime environment (EC2 instance) vs the development environment (Mac OS). 
+To overcome this issue, we are using the [_serverless-package-python-functions_](https://www.npmjs.com/package/serverless-package-python-functions) plugin which will assist in downloading the required libraries from a [Docker image](https://hub.docker.com/r/lambci/lambda/) that closely resembles the EC2 instance environment.
 
-The serverless-package-python-functions plugin is preinstalled to this repo `/source/web_api/node_modules/` and requires no additional setup; specifically, we are using [this](https://github.com/StidZhang/serverless-package-python-functions) personal version because of a bug mentioned [here](https://github.com/ubaniabalogun/serverless-package-python-functions/issues/34).
+The serverless-package-python-functions plugin is preinstalled to this repo `/source/web_api/node_modules/` and requires no additional setup; 
+specifically, we are using [this](https://github.com/StidZhang/serverless-package-python-functions) personal version because of a bug mentioned [here](https://github.com/ubaniabalogun/serverless-package-python-functions/issues/34).
 
 All lambdas belonging to Vger are named `vger-sls-*-{stage}`, where `{stage}` is either `qa` or `prod`.
 
 ## ETL Lambda
 
-ETLs with stage name `prod` load into `git` database, and `qa` load into `vger_dev`. CloudWatch events are only setup for  production environment and there are no scheduled `qa` ETLs running to save unnecessary costs.
+ETLs with stage name `prod` load into `git` database, and `qa` load into `vger_dev`. 
+CloudWatch events are only setup for  production environment and there are no scheduled `qa` ETLs running to save unnecessary costs.
 
 ### ETL Manual Triggering
 
@@ -51,17 +55,25 @@ jira-etl
 
 ### ETL Logic
 
-All ETLs are triggered as an "Event" asychronously.
+All ETLs are triggered as an "Event" asynchronously.
 
-The main restriction for AWS Lambda is the 300 seconds [maximum execution limit](https://docs.aws.amazon.com/lambda/latest/dg/limits.html). For normal ETL run, it won't create any problems since ETL runs every 4 hours and the amount of data gets processed each time can be easily handled within 300 seconds. However, for new projects/new repos, they might already have thousands of issues/pull requests before start using Vger and the amount of data will not be able to finish processing within 300 seconds, and lambda can get cut down at any seconds. Therefore, we introduce watermark so that when Lambda kicks of next time, it will know how much it has already processed.
+The main restriction for AWS Lambda is the 300 seconds [maximum execution limit](https://docs.aws.amazon.com/lambda/latest/dg/limits.html). 
+For normal ETL run, it won't create any problems since ETL runs every 4 hours and the amount of data gets processed each time can be easily handled within 300 seconds. 
+However, for new projects/new repos, they might already have thousands of issues/pull requests before start using Vger and the amount of data will not be able to finish processing within 300 seconds, 
+and lambda can get cut down at any seconds. 
+Therefore, we introduce watermark so that when Lambda kicks of next time, it will know how much it has already processed.
 
-Another behaviour of ETL lambda that is worth mentioning is [automatic retry](https://docs.aws.amazon.com/lambda/latest/dg/retries-on-errors.html). Automatic retry will reinvoke any asychronous Lambda executions that failed, including those lambdas timed out. It cannot be disabled and need to be taken care of when designing ETLs.
+Another behaviour of ETL lambda that is worth mentioning is [automatic retry](https://docs.aws.amazon.com/lambda/latest/dg/retries-on-errors.html). 
+Automatic retry will reinvoke any asynchronous Lambda executions that failed, including those lambdas timed out. 
+It cannot be disabled and needs to be taken care of when designing ETLs.
 
 #### JIRA ETL
 
 JIRA ETL scheduler is triggered by CloudWatch event every 4 hours and then invoke JIRA ETL on each individual project and load issue changes into the `issue_change` table.
 
-JIRA ETL uses the field `last_issue_change` in table `team_project` as a watermark, and only looks for issues that gets updated after the watermark. Currently, it will load 1000(or less) issues into database at a time, and if there're still more issues, it will keep loading issues at a time until ETL times out. Usually in one Lambda invocation, it can load 2-5 times until it times out.
+JIRA ETL uses the field `last_issue_change` in table `team_project` as a watermark, and only looks for issues that gets updated after the watermark. 
+Currently, it will load 1000 (or less) issues into database at a time, and if there're still more issues, it will keep loading issues at a time until ETL times out. 
+Usually in one Lambda invocation, it can load 2-5 times until it times out.
 
 Another table `team_project_etl` is introduced and JIRA ETL will check the table to see if any ETL is running right now and if so stop execution.
 
@@ -69,32 +81,39 @@ Compare to other ETLs, JIRA ETL saves new issue changes to a csv file, uploads c
 
 #### JIRA Issue Type ETL
 
-JIRA issue type ETL is triggered by CloudWatch event every 4 hours and select distinct work types from `issue_change` table and load to `team_jira_issue_type` table and updates `team_work_types` table accordingly. It's relatively short and normally finished within 20 seconds.
+JIRA issue type ETL is triggered by CloudWatch event every 4 hours and select distinct work types from `issue_change` table and load to `team_jira_issue_type` table and updates `team_work_types` table accordingly. 
+It's relatively short and normally finished within 20 seconds.
 
 #### GitHub Tag ETL
 
-Git ETL scheudler is triggered every hour and it will invoke git-tag-etl on each individual repo every 4 hours based on the schduler invoked time and load data into `tags`.
+Git ETL scheduler is triggered every hour and it will invoke git-tag-etl on each individual repo every 4 hours based on the scheduler invoke time and load data into `tags`.
 
 Tag ETL uses table `git_watermarks` to store the [cursor value of pagination](http://graphql.org/learn/pagination/) in GraphQL as a watermark.
 
-Compare to contents in all other ETLs, git tags is mutable, which means having only cumulative invocation will not guarantee the correctness for tags, so an invocataion with field `"reset": true` is triggered once a day(should be less frequent) which wipes out the database and re-ETL all tags.
+Compare to contents in all other ETLs, git tags is mutable, which means having only cumulative invocation will not guarantee the correctness for tags, so an invocation with field `"reset": true` is triggered once a day (should be less frequent) which wipes out the database and re-ETL all tags.
 
 Thanks to GraphQL, a complete re-ETL for a repo with 5000 tags can be finished in 45 seconds.
 
-Github GraphQL API has a [rate limit of 5000 points/hr](https://developer.github.com/v4/guides/resource-limitations/), calculated separately from REST API. Current ETL process is far away from reaching the limit and no other projects in BV is sharing the limit now, but it should be in consideration when it scales up.
+Github GraphQL API has a [rate limit of 5000 points/hr](https://developer.github.com/v4/guides/resource-limitations/), calculated separately from REST API. 
+Current ETL process is far away from reaching the limit and no other projects in BV are sharing the limit now, but it should be in consideration when it scales up.
 
 #### GitHub Pull Request ETL
 
-Git ETL scheudler is triggered every hour and it will invoke git-pr-etl on each individual repo every 4 hours based on the schduler invoked time and load data into `pull_requests`.
+Git ETL scheduler is triggered every hour and it will invoke git-pr-etl on each individual repo every 4 hours based on the scheduler invoked time and load data into `pull_requests`.
 
-Pull requests ETL uses table `git_watermarks` to store the total amount of pull requests that has been created as a watermark, and use it as a reference for [pagination in Github REST API](https://developer.github.com/v3/guides/traversing-with-pagination/). It does not use GraphQL because of the instability, but code can be found in `source/git_etl/git_etl_pr/git_etl_pr_new.py`. 
+Pull requests ETL uses table `git_watermarks` to store the total amount of pull requests that has been created as a watermark, and use it as a reference for [pagination in Github REST API](https://developer.github.com/v3/guides/traversing-with-pagination/). 
+It does not use GraphQL because of the instability, but code can be found in `source/git_etl/git_etl_pr/git_etl_pr_new.py`. 
 
-Compare to Github tag ETL, GitHub pull requests also need to handle [rate limit](https://developer.github.com/v3/rate_limit/) properly. The rate limit right now is 5000 requests/hr shared by the entire BV, so any update to this ETL should handle the rate limit properly.
+Compare to Github tag ETL, GitHub pull requests also need to handle [rate limit](https://developer.github.com/v3/rate_limit/) properly. 
+The rate limit right now is 5000 requests/hr shared by all of BV, so any update to this ETL should handle the rate limit properly.
 
 
 ## Web API Lambda
 
-The lambdas must be carefully organized for Serverless and its plugin to work. Each lambda functions should be contained inside a folder along with requirements.txt listing all dependent libraries for that specific lambda file. Custom helper functions that are not lambdas themselves should be also placed within an individual folder under the utils directory. Any dependent libraries for these helper functions should be listed in the requirements.txt of *those lambda functions that are importing the helper functions*.
+The lambdas must be carefully organized for Serverless and its plugin to work. 
+Each lambda functions should be contained inside a folder along with requirements.txt listing all dependent libraries for that specific lambda file. 
+Custom helper functions that are not lambdas themselves should be also placed within an individual folder under the utils directory. 
+Any dependent libraries for these helper functions should be listed in the requirements.txt of *those lambda functions that are importing the helper functions*.
 
 Take a look at the following example folder structure and the current serverless.yml located in the web_api directory for reference:
 
@@ -183,9 +202,10 @@ def handler(event, context):
     return response
 ```
 
-After creating a new lambda, you must run the full serverless deployment to include it to the existing CloudFormation stack. If you deploy the lambda function independent of the stack, you will later run in trouble syncing the function when adding it to cf stack down the road.
+After creating a new lambda, you must run the full serverless deployment to include it to the existing CloudFormation stack. 
+If you deploy the lambda function independent of the stack, you will later run into trouble syncing the function when adding it to cf stack down the road.
 
-### Helper Functions Explaination
+### Helper Functions Explanation
 
 __Note__: Many of the helper functions can be and should be reorganized.
 

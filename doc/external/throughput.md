@@ -22,7 +22,8 @@ You can see how your team is completing two different kinds of work items.
 What do the lines mean?
 -----------------------
 
-The Throughput chart normally shows weekly throughput values measured for each week in the time range defined by the From and To dates. Or, if you want to see only the overall trend between the From date and the To date, click on ![](attachments/87623690/87625342.png).
+The Throughput chart normally shows weekly throughput values measured for each week in the time range defined by the From and To dates. 
+Or, if you want to see only the overall trend between the From date and the To date, click on ![](attachments/87623690/87625342.png).
 
 **Actual**
 
