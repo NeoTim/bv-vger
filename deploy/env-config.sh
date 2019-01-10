@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 set -e
 
 usage()
@@ -15,7 +16,7 @@ usage()
 
 printAwsConfig()
 {
-    if [ -z "`which jq`" ] ; then
+    if [[ -z "`which jq`" ]] ; then
         echo "This command requires the 'jq' program. Please run 'brew install jq'." >&2
         exit 1
     fi
@@ -23,7 +24,7 @@ printAwsConfig()
         jq -M -r ".Environment.Variables | to_entries + [{key: \"ENV\", value: \"${env}\"}]  | map(.key + \": '\" + .value + \"'\") | .[]"
 }
 
-while [ $# -gt 0 ] ; do
+while [[ $# -gt 0 ]] ; do
   case $1 in
     -p) print=1;;
     -f) force=1;;
@@ -33,32 +34,32 @@ while [ $# -gt 0 ] ; do
   shift
 done
 
-if [ $# -lt 1 -o $# -gt 2 ] ; then
+if [[ $# -lt 1 || $# -gt 2 ]] ; then
     usage
     exit 1
 fi
 
 env=$1
-case $env in
+case ${env} in
    prod|qa) ;;
       *) echo "Unknown deployment environment: $env" >&2; exit 1;;   
 esac
 
-if [ "$print" ] ; then
+if [[ "$print" ]] ; then
     printAwsConfig
 else
     lambdaDir=${2:-`pwd`}
-    if [ ! -f ${lambdaDir}/serverless.yml ] ; then
+    if [[ ! -f ${lambdaDir}/serverless.yml ]] ; then
         echo "${lambdaDir} is not a lambda directory" >&2
         exit 1
     fi
 
     # Need to generate a new config file?
-    cd $lambdaDir
+    cd ${lambdaDir}
     configFile=env/env.${env}.yml
-    if [ ! -f $configFile -o "$force" ] ; then
+    if [[ ! -f ${configFile} || "$force" ]] ; then
         # Yes, extract environment variables from current AWS configuration
-        mkdir -p `dirname $configFile`
+        mkdir -p `dirname ${configFile}`
         printAwsConfig > ${configFile}
     fi
 fi

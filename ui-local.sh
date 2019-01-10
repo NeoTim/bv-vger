@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 set -e
 
 usage()
@@ -7,7 +8,7 @@ usage()
     echo "  Runs the current UI code locally, using the QA environment" >&2
 }
 
-while [ $# -gt 0 ] ; do
+while [[ $# -gt 0 ]] ; do
   case $1 in
     -*) usage; exit 1;;
      *) break;;
@@ -15,7 +16,7 @@ while [ $# -gt 0 ] ; do
   shift
 done
 
-if [ $# -ne 0 ] ; then
+if [[ $# -ne 0 ]] ; then
     usage
     exit 1
 fi
@@ -29,4 +30,4 @@ cd ${bindir}/source/webpage
 http-server -o
 
 # Clean up generated config file for QA environment
-rm $ui_config
+rm ${ui_config}

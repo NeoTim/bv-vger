@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 set -e
 
 usage()
@@ -10,7 +11,7 @@ usage()
     echo "  -f    If specified, forces generation of a new environment variable configuration file for this deployment environment" >&2
 }
 
-while [ $# -gt 0 ] ; do
+while [[ $# -gt 0 ]] ; do
   case $1 in
     -f) force==1;;
     -*) usage; exit 1;;
@@ -19,13 +20,13 @@ while [ $# -gt 0 ] ; do
   shift
 done
 
-if [ $# -lt 1 -o $# -gt 2 ] ; then
+if [[ $# -lt 1 || $# -gt 2 ]] ; then
     usage
     exit 1
 fi
 
 bindir=`dirname $0`
-bindir=`cd $bindir; pwd`
+bindir=`cd ${bindir}; pwd`
 
 # Run private file transfer script (only works if bv-vger-config is in same root directory as bv-vger)
 cd ..
@@ -33,25 +34,25 @@ sh bv-vger-config/vger-config-setup-private.sh
 cd ${bindir}
 
 env=$1
-case $env in
+case ${env} in
    prod|qa) ;;
       *) echo "Unknown deployment environment: $env" >&2; exit 1;;   
 esac
 
 cd ..
 lambdaDir=${2:-`pwd`}
-if [ ! -f ${lambdaDir}/serverless.yml ] ; then
+if [[ ! -f ${lambdaDir}/serverless.yml ]] ; then
     echo "${lambdaDir} is not a lambda directory" >&2
     exit 1
 fi
-cd $lambdaDir
+cd ${lambdaDir}
 
 # If necessary, generate the environment variable configuration for this lambda directory
-$bindir/env-config.sh ${force:+-f} $env
+${bindir}/env-config.sh ${force:+-f} ${env}
 
-serverless deploy --stage $env
+serverless deploy --stage ${env}
 
-cd $bindir
+cd ${bindir}
 
 # Run public file transfer script (only works if bv-vger-config is in same root directory as bv-vger)
 cd ../..

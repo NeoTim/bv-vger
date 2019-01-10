@@ -6,7 +6,7 @@ echo "//-------------------------PHASE 0: BUILD OPTIMIZED APP-------------------
 
 #Directory of current file
 bindir=`dirname $0`
-bindir=`cd $bindir; pwd`
+bindir=`cd ${bindir}; pwd`
 
 # Run private file transfer script (only works if bv-vger-config is in same root directory as bv-vger)
 cd ..
@@ -36,7 +36,7 @@ usage()
     echo "  Sets up report configuration for the specified environment (either 'qa' or 'prod') and then deploys" >&2
 }
 
-while [ $# -gt 0 ] ; do
+while [[ $# -gt 0 ]] ; do
   case $1 in
     -*) usage; exit 1;;
      *) break;;
@@ -44,7 +44,7 @@ while [ $# -gt 0 ] ; do
   shift
 done
 
-if [ $# -ne 1 ] ; then
+if [[ $# -ne 1 ]] ; then
     usage
     exit 1
 fi
@@ -55,14 +55,14 @@ echo "//-------------------------PHASE 2: DEFINE S3 BUCKET----------------------
 env=$1
 source deployConstants.sh
 
-case $env in
+case ${env} in
    prod) bucket_name=${prod_bucket};;
      qa) bucket_name=${qa_bucket};;
       *) echo "Unknown environment: $env" >&2; exit 1;;   
 esac
 
 # Define the UI config file for this environment         
-reports_config=`${bindir}/reports-config.sh $env`
+reports_config=`${bindir}/reports-config.sh ${env}`
 
 echo "//-------------------------PHASE 3: DEPLOY TO S3 BUCKET---------------------------//"
 
@@ -79,7 +79,7 @@ sh deRouter.sh
 
 echo "Done derouting report app for local dev!" 
 
-rm $reports_config
+rm ${reports_config}
 
 #leave current directory in order to get back template files
 cd ${bindir}

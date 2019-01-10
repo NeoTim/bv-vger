@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 set -e
 
 usage()
@@ -7,7 +8,7 @@ usage()
     echo "  Sets up UI configuration for the specified environment (either 'qa' or 'prod')" >&2
 }
 
-while [ $# -gt 0 ] ; do
+while [[ $# -gt 0 ]] ; do
   case $1 in
     -*) usage; exit 1;;
      *) break;;
@@ -15,16 +16,16 @@ while [ $# -gt 0 ] ; do
   shift
 done
 
-if [ $# -ne 1 ] ; then
+if [[ $# -ne 1 ]] ; then
     usage
     exit 1
 fi
 
 bindir=`dirname $0`
-bindir=`cd $bindir; pwd`
+bindir=`cd ${bindir}; pwd`
 
 env=$1
-case $env in
+case ${env} in
    prod) ;;
      qa) ;;
       *) echo "Unknown environment: $env"; exit 1;;   

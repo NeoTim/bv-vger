@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 set -e
 
 usage()
@@ -7,7 +8,7 @@ usage()
     echo "  Deploys UI JavaScript code and supporting API code to the specified environment (either 'qa' or 'prod')" >&2
 }
 
-while [ $# -gt 0 ] ; do
+while [[ $# -gt 0 ]] ; do
   case $1 in
     -*) usage; exit 1;;
      *) break;;
@@ -15,13 +16,13 @@ while [ $# -gt 0 ] ; do
   shift
 done
 
-if [ $# -ne 1 ] ; then
+if [[ $# -ne 1 ]] ; then
     usage
     exit 1
 fi
 
 bindir=`dirname $0`
-bindir=`cd $bindir; pwd`
+bindir=`cd ${bindir}; pwd`
 
 # Run private file transfer script (only works if bv-vger-config is in same root directory as bv-vger)
 cd ..
@@ -32,21 +33,21 @@ cd ${bindir}
 env=$1
 source deployConstants.sh
 
-case $env in
+case ${env} in
    prod) bucket_name=${prod_bucket};;
      qa) bucket_name=${qa_bucket};;
       *) echo "Unknown environment: $env" >&2; exit 1;;   
 esac
 
 # Define the UI config file for this environment         
-ui_config=`${bindir}/ui-config.sh $env`
+ui_config=`${bindir}/ui-config.sh ${env}`
 
 # Deploy UI code to S3 bucket
 cd ${bindir}/..
 aws s3 sync source/webpage s3://${bucket_name}/vger --include "*" --exclude 'reports/*' 
-rm $ui_config
+rm ${ui_config}
 
-cd $bindir
+cd ${bindir}
 
 # Run public file transfer script (only works if bv-vger-config is in same root directory as bv-vger)
 cd ../..

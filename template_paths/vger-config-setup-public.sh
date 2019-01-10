@@ -5,18 +5,18 @@ set -e
 
 # Directory of current file
 bindir=`dirname $0`
-bindir=`cd $bindir; pwd`
-echo $bindir
+bindir=`cd ${bindir}; pwd`
+echo ${bindir}
 
 
 LISTFILE="./paths.txt"
 while read FILE; do
-	echo $FILE
+	echo ${FILE}
 	# Get filename
 	FILENAME="${FILE##*/}"
 	# Get directory of file that was just moved
-	DIRNAME=$(dirname $FILE)
-	cp $bindir/blanks/$FILE $bindir/../$DIRNAME
-done < $LISTFILE
+	DIRNAME=$(dirname ${FILE})
+	cp ${bindir}/blanks/${FILE} ${bindir}/../${DIRNAME}
+done < ${LISTFILE}
 echo "Done!"
 
