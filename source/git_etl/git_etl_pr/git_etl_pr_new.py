@@ -1,13 +1,11 @@
 from __future__ import print_function
-import boto3
-import os
 import requests
 import psycopg2
 import json
 from psycopg2.extras import execute_values
 from iso8601 import parse_date
-
-import git_etl_constants
+from source import common_constants
+from source.git_etl.constants import git_etl_constants
 
 
 def handler(event, context):
@@ -17,25 +15,19 @@ def handler(event, context):
     # Note Rate limit on GraphQL is different than REST API limit
     MINIMUM_RATE_REMAINING = 100
 
-    ENV = os.environ['ENV']
-    ssm_base = os.environ["VGER_SSM_BASE"]
-    ssm_client = boto3.client('ssm')
-
     # AWS connection init
     connection_detail = {
-        'dbname': ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/database_name'.format(ssm_base=ssm_base, env=ENV)),
-        'host': ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/cluster_endpoint'.format(ssm_base=ssm_base, env=ENV)),
-        'port': ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/port'.format(ssm_base=ssm_base, env=ENV)),
-        'user': ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/username'.format(ssm_base=ssm_base, env=ENV), WithDecryption=True),
-        'password': ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/password'.format(ssm_base=ssm_base, env=ENV), WithDecryption=True)
+        'dbname': common_constants.REDSHIFT_DATABASE_NAME,
+        'host': common_constants.REDSHIFT_CLUSTER_ENDPOINT,
+        'port': common_constants.REDSHIFT_PORT,
+        'user': common_constants.REDSHIFT_USERNAME,
+        'password': common_constants.REDSHIFT_PASSWORD
     }
 
     conn = psycopg2.connect(**connection_detail)
 
-    E_GIT_API_KEY = ssm_client.get_parameter(Name='/{ssm_base}/git/{env}/api_key'.format(ssm_base=ssm_base, env=ENV), WithDecryption=True)
-
     graphql_url = git_etl_constants.GRAPHQL_URL
-    headers = {'Authorization': 'token {}'.format(E_GIT_API_KEY)}
+    headers = {'Authorization': 'token {}'.format(git_etl_constants.GIT_API_KEY)}
     next_page = True
 
     watermark_query = "SELECT watermark_value FROM git_watermarks WHERE repo_name = (%s) AND table_name = (%s)"
@@ -83,7 +75,8 @@ def handler(event, context):
               }
             }
             """ % (
-            git_etl_constants.ORGANIZATION, repo, ' after: "{}"'.format(graphql_cursor) if graphql_cursor else "")}
+                git_etl_constants.GIT_ORGANIZATION, repo,
+                ' after: "{}"'.format(graphql_cursor) if graphql_cursor else "")}
 
         r = requests.post(url=graphql_url, json=query, headers=headers)
         if r.ok:
@@ -134,9 +127,6 @@ def handler(event, context):
                     execute_values(cur, insert_new_pr_query, format_prs, template=None, page_size=100)
 
             print("{} new pull requests in repo {} inserted into database".format(len(format_prs), repo))
-
-
-
         else:
             print("Cursor: {}".format(graphql_cursor))
             print("Unexpected error on GraphQL API request: {}".format(str(r.content)))
@@ -176,7 +166,7 @@ def handler(event, context):
                 }
               }
             }
-            """ % (git_etl_constants.ORGANIZATION, repo, open_pr[0])
+            """ % (git_etl_constants.GIT_ORGANIZATION, repo, open_pr[0])
         }
         r = requests.post(url=graphql_url, json=query, headers=headers)
         if r.ok:

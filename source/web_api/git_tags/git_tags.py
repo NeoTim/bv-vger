@@ -1,10 +1,9 @@
 from __future__ import print_function
-import boto3
-import os
 import json
 import datetime
 import urllib
 import psycopg2
+from source import common_constants
 
 
 def next_weekday(d, weekday):
@@ -32,20 +31,12 @@ def handler(event, context):
         }
         return response
 
-    # Defining environment variables for accessing private information
-    ENV = os.environ['ENV']
-    ssm_base = os.environ["VGER_SSM_BASE"]
-    ssm_client = boto3.client('ssm')
-
-    E_AWS_RS_USER = ssm_client.get_parameter(Name='/{ssm_base}/redshift/env/username'.format(ssm_base=ssm_base, env=ENV))
-    E_AWS_RS_PASS = ssm_client.get_parameter(Name='/{ssm_base}/redshift/env/password'.format(ssm_base=ssm_base, env=ENV), WithDecryption=True)
-    DATABASE_NAME = ssm_client.get_parameter(Name='/{ssm_base}/redshift/env/database_name'.format(ssm_base=ssm_base, env=ENV))
-    REDSHIFT_PORT = ssm_client.get_parameter(Name='/{ssm_base}/redshift/env/port'.format(ssm_base=ssm_base, env=ENV))
-    CLUSTER_ENDPOINT = ssm_client.get_parameter(Name='/{ssm_base}/redshift/env/cluster_endpoint'.format(ssm_base=ssm_base, env=ENV))
-
     # Connect to the Vger Redshift DB
-    conn = psycopg2.connect(dbname=DATABASE_NAME, host=CLUSTER_ENDPOINT, port=REDSHIFT_PORT,
-                            user=E_AWS_RS_USER, password=E_AWS_RS_PASS)
+    conn = psycopg2.connect(dbname=common_constants.REDSHIFT_DATABASE_NAME,
+                            host=common_constants.REDSHIFT_CLUSTER_ENDPOINT,
+                            port=common_constants.REDSHIFT_PORT,
+                            user=common_constants.REDSHIFT_USERNAME,
+                            password=common_constants.REDSHIFT_PASSWORD)
     cur = conn.cursor()
 
     selectIDQuery = "SELECT repo_name FROM team_repo WHERE team_project_id = %s"
@@ -102,11 +93,11 @@ def handler(event, context):
 
     try:
         # Try to decode the given date parameters, if undecodable throw exception
-        if (dateUntil != None):
+        if dateUntil is not None:
             decodedDate = urllib.unquote(dateUntil).decode('utf8')
             decodedDate = datetime.datetime.strptime(decodedDate, '%Y-%m-%d')
             dateUntil = decodedDate
-        if (dateSince != None):
+        if dateSince is not None:
             decodedDate = urllib.unquote(dateSince).decode('utf8')
             decodedDate = datetime.datetime.strptime(decodedDate, '%Y-%m-%d')
             dateSince = decodedDate
@@ -115,9 +106,9 @@ def handler(event, context):
         conn.close()
         payload = {
             "message": "Could not decode date(s). Ensure the given dates are URL encoded (ex YYYY-MM-DD encodes to YYYY-MM-DD). Given:"}
-        if (dateUntil != None):
+        if dateUntil is not None:
             payload["message"] += " dateUntil:{}".format(dateUntil)
-        if (dateSince != None):
+        if dateSince is not None:
             payload["message"] += " dateSince:{}".format(dateSince)
         response = {
             "statusCode": 400,
@@ -130,14 +121,14 @@ def handler(event, context):
         return response
 
     today = datetime.datetime.today()
-    if (not (dateUntil != None and dateSince != None)):
-        if (dateUntil != None):
+    if not (dateUntil is not None and dateSince is not None):
+        if dateUntil is not None:
             # If dateUntil specified later than today
-            if (dateUntil > today):
+            if dateUntil > today:
                 dateUntil = today
             # If only dateUntil is given, calculate dateSince
             dateSince = dateUntil - datetime.timedelta(days)
-        elif (dateSince != None):
+        elif dateSince is not None:
             # If only dateSince is given, calculate dateUntil
             dateUntil = dateSince + datetime.timedelta(days)
         else:
@@ -147,7 +138,7 @@ def handler(event, context):
             dateUntil = today
             dateSince = dateUntil - datetime.timedelta(days)
     else:
-        if (dateSince > dateUntil):
+        if dateSince > dateUntil:
             cur.close()
             conn.close()
             payload = {"message": "Given dateSince which is later than dateUntil"}
@@ -167,7 +158,7 @@ def handler(event, context):
     dateSince = dateSince - datetime.timedelta(weeks=1)
 
     # If dateUntil specified later than today
-    if (dateUntil > today):
+    if dateUntil > today:
         dateUntil = today
 
     # Round dateUntil to previous Sunday Midnight

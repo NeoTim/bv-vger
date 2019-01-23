@@ -1,12 +1,12 @@
-import boto3
-import os
 import json
 import requests
 import urllib
 import re
-from redshift_connection import RedshiftConnection
+from source.git_etl.constants import git_etl_constants
+from source.jira_etl.constants import jira_etl_constants
+from source.web_api.utils.redshift_connection import RedshiftConnection
+from source.web_api.utils.constants import web_api_constants
 
-import web_api_constants
 
 def response_formatter(status_code='400', body={'message': 'error'}):
     api_response = {
@@ -23,7 +23,8 @@ def response_formatter(status_code='400', body={'message': 'error'}):
     }
     return api_response
 
-def find_default_start_state(JH_USER, JH_PASS, columns):
+
+def find_default_start_state(columns):
     default_state = ''
     first_column = ''
     contains_open = False
@@ -37,43 +38,34 @@ def find_default_start_state(JH_USER, JH_PASS, columns):
             return default_state
         for status in column['mappedStatuses']:
             status_name = status['name']
-            if (status_name == 'Open'):
+            if status_name == 'Open':
                 contains_open = True
     # After iterating through all columns and the 'Open' status was never found,
     # use the first column as the default lead time start state
-    if contains_open == False:
+    if not contains_open:
         default_state = first_column
 
     return default_state
 
-def find_default_end_state(JH_USER, JH_PASS, columns):
+
+def find_default_end_state(columns):
     default_state = 'Pseudo End State'
     contains_closed = False
     for column in reversed(columns):
         state = column['name']
         for status in column['mappedStatuses']:
             status_name = status['name']
-            if (status_name == 'Closed'):
+            if status_name == 'Closed':
                 contains_closed = True
                 break
-        if contains_closed == True:
+        if contains_closed:
             default_state = state
             return default_state
 
     return default_state
 
-def handler(event, context):
-    ENV = os.environ['ENV']
-    ssm_base = os.environ["VGER_SSM_BASE"]
-    ssm_client = boto3.client('ssm')
 
-    # Set env variables
-    GIT_API_USER = ssm_client.get_parameter(Name='/{ssm_base}/git/{env}/api_user'.format(ssm_base=ssm_base, env=ENV))
-    GIT_API_KEY = ssm_client.get_parameter(Name='/{ssm_base}/git/{env}/api_key'.format(ssm_base=ssm_base, env=ENV), WithDecryption=True)
-    JH_USER = ssm_client.get_parameter(Name='/{ssm_base}/jira/{env}/username'.format(ssm_base=ssm_base, env=ENV))
-    JH_PASS = ssm_client.get_parameter(Name='/{ssm_base}/jira/{env}/password'.format(ssm_base=ssm_base, env=ENV), WithDecryption=True)
-    JH_JIRAURL = ssm_client.get_parameter(Name='/{ssm_base}/jira/{env}/host_url'.format(ssm_base=ssm_base, env=ENV))
-    
+def handler(event, context):
     # Validate user input
     try: 
         # User input
@@ -99,7 +91,7 @@ def handler(event, context):
     try:
         redshift = RedshiftConnection()
         project_exists = redshift.validateProjectName(project_name)
-        # If project name already exsits:
+        # If project name already exists:
         if project_exists:
             payload = {'message': 'Project name already exists'}
             return response_formatter(status_code='400', body=payload)
@@ -115,13 +107,13 @@ def handler(event, context):
         encoded_board_name = urllib.quote(board_name, safe='')
         # Jira only allows to query board names that contain a string
         # which may result in multiple values returned
-        JIRA_BOARD_API = web_api_constants.BOARD_NAME_URL.format(JH_JIRAURL, encoded_board_name)
-        content = requests.get(JIRA_BOARD_API, auth=(JH_USER, JH_PASS)).json()
+        JIRA_BOARD_API = web_api_constants.BOARD_NAME_URL.format(jira_etl_constants.JIRA_BASE_URL, encoded_board_name)
+        content = requests.get(JIRA_BOARD_API, auth=(jira_etl_constants.JIRA_USERNAME, jira_etl_constants.JIRA_PASSWORD)).json()
         boards = content['values']
         for board in boards:
             if board['name'] == board_name:
                 board_id = board['id']
-        board_id # raise exception if it does not exists
+        board_id  # raise exception if it does not exists
     except:
         payload = {'message': 'Jira Board Name: {} cannot be found'.format(board_name)}
         return response_formatter(status_code='404', body=payload)
@@ -131,8 +123,8 @@ def handler(event, context):
         # Validate Git repo
         try:
             for repo in git_repos:
-                GITHUB_API = web_api_constants.GITHUB_API_URL.format(repo)
-                r = requests.get(GITHUB_API, headers={'Authorization': 'token %s' % GIT_API_KEY})
+                GITHUB_API = git_etl_constants.GIT_REPO_URL.format(repo=repo)
+                r = requests.get(GITHUB_API, headers={'Authorization': 'token %s' % git_etl_constants.GIT_API_KEY})
                 if r.status_code != 200:
                     raise Exception
         except:
@@ -151,10 +143,10 @@ def handler(event, context):
 
     # Get board configurations
     try: 
-        JIRA_BOARD_CONFIG_API = web_api_constants.CONFIG_API_URL.format(JH_JIRAURL, board_id)
-        board_config = requests.get(JIRA_BOARD_CONFIG_API, auth=(JH_USER, JH_PASS)).json()
-        default_start_state = find_default_start_state(JH_USER, JH_PASS, board_config['rapidListConfig']['mappedColumns'])
-        default_end_state = find_default_end_state(JH_USER, JH_PASS, board_config['rapidListConfig']['mappedColumns'])
+        JIRA_BOARD_CONFIG_API = web_api_constants.CONFIG_API_URL.format(jira_etl_constants.JIRA_BASE_URL, board_id)
+        board_config = requests.get(JIRA_BOARD_CONFIG_API, auth=(jira_etl_constants.JIRA_USERNAME, jira_etl_constants.JIRA_PASSWORD)).json()
+        default_start_state = find_default_start_state(board_config['rapidListConfig']['mappedColumns'])
+        default_end_state = find_default_end_state(board_config['rapidListConfig']['mappedColumns'])
         
         main_query = board_config['filterConfig']['query']
         sub_query = board_config['subqueryConfig']['subqueries'][0]['query']
@@ -211,7 +203,7 @@ def handler(event, context):
 
         # Board requires additional pseudo kanban column to map closed tickets if originally unmapped from all columns
         # Insert pseudo kaban column into team_status_states and team_work_states table
-        if (default_end_state ==  pseudo_end_state_name):
+        if default_end_state == pseudo_end_state_name:
             status_state_values.append((project_id, 'Closed', pseudo_end_state_name))
             work_state_values.append((project_id, pseudo_end_state_name, seq_number))
         

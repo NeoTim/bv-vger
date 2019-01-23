@@ -1,11 +1,10 @@
 import json
-import boto3
-import os
 import requests
 import urllib
 from redshift_connection import RedshiftConnection
 
-import web_api_constants
+from source.web_api.utils.constants import web_api_constants
+from source.jira_etl.constants import jira_etl_constants
 
 
 def response_formatter(status_code='400', body={'message': 'error'}):
@@ -42,19 +41,11 @@ def handler(event, context):
         payload = {"message": "Could not get id path parameter"}
         return response_formatter(status_code='400', body=payload)
 
-    ENV = os.environ['ENV']
-    ssm_base = os.environ["VGER_SSM_BASE"]
-    ssm_client = boto3.client('ssm')
-
-    JH_USER = ssm_client.get_parameter(Name='/{ssm_base}/jira/{env}/username'.format(ssm_base=ssm_base, env=ENV))
-    JH_PASS = ssm_client.get_parameter(Name='/{ssm_base}/jira/{env}/password'.format(ssm_base=ssm_base, env=ENV), WithDecryption=True)
-    JH_JIRAURL = ssm_client.get_parameter(Name='/{ssm_base}/jira/{env}/host_url'.format(ssm_base=ssm_base, env=ENV))
-
     # Validate board_name exists
     try:
         encoded_board_name = urllib.quote(board_name, safe='')
-        JIRA_BOARD_API = web_api_constants.BOARD_NAME_URL.format(JH_JIRAURL, encoded_board_name)
-        content = requests.get(JIRA_BOARD_API, auth=(JH_USER, JH_PASS)).json()
+        JIRA_BOARD_API = web_api_constants.BOARD_NAME_URL.format(jira_etl_constants.JIRA_BASE_URL, encoded_board_name)
+        content = requests.get(JIRA_BOARD_API, auth=(jira_etl_constants.JIRA_USERNAME, jira_etl_constants.JIRA_PASSWORD)).json()
         boards = content['values']
         for board in boards:
             if board['name'] == board_name:
@@ -78,8 +69,8 @@ def handler(event, context):
 
     # Validate excluded_issue_type
     try:
-        JIRA_ISSUE_TYPE = web_api_constants.JIRA_SEARCH_URL.format(JH_JIRAURL)
-        issue_types = requests.get(JIRA_ISSUE_TYPE, auth=(JH_USER, JH_PASS)).json()
+        JIRA_ISSUE_TYPE = web_api_constants.JIRA_SEARCH_URL.format(jira_etl_constants.JIRA_BASE_URL)
+        issue_types = requests.get(JIRA_ISSUE_TYPE, auth=(jira_etl_constants.JIRA_USERNAME, jira_etl_constants.JIRA_PASSWORD)).json()
         # Split csv to array
         excluded_issue_types_list = excluded_issue_types.split(',') if excluded_issue_types else []
         if excluded_issue_types_list:
@@ -94,8 +85,8 @@ def handler(event, context):
     # Validate JQL
     queryString = urllib.quote(issue_filter, safe='')
     queryString += '&fields=*none&maxResults=0'
-    pageURL = web_api_constants.JQL_SEARCH_URL.format(queryString)
-    r = requests.get(pageURL, auth=(JH_USER, JH_PASS))
+    pageURL = jira_etl_constants.JQL_SEARCH_URL.format(query_parameters=queryString)
+    r = requests.get(pageURL, auth=(jira_etl_constants.JIRA_USERNAME, jira_etl_constants.JIRA_PASSWORD))
     if not r.ok:
         payload = {"message": "Error in the JQL Query: {}".format(r.content)}
         return response_formatter(status_code='400', body=payload)

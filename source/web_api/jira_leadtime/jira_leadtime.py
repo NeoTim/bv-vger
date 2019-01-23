@@ -1,6 +1,4 @@
 from __future__ import print_function
-import boto3
-import os
 import psycopg2
 import math
 import datetime
@@ -15,6 +13,7 @@ from query_parameters import QueryParameters
 from redshift_connection import RedshiftConnection
 from percentile import percentile_calculation
 from response_helper import response_formatter
+from source import common_constants
 
 
 def handler(event, context):
@@ -71,16 +70,12 @@ def handler(event, context):
         rollingWeeks.append(startDate)
 
     # Init redshift connection
-    ENV = os.environ['ENV']
-    ssm_base = os.environ["VGER_SSM_BASE"]
-    ssm_client = boto3.client('ssm')
-
     connection_detail = {
-        'dbname': ssm_client.get_parameter(Name='/{ssm_env}/redshift/{env}/database_name'.format(ssm_base=ssm_base, env=ENV)),
-        'host': ssm_client.get_parameter(Name='/{ssm_env}/redshift/{env}/cluster_endpoint'.format(ssm_base=ssm_base, env=ENV)),
-        'port': ssm_client.get_parameter(Name='/{ssm_env}/redshift/{env}/port'.format(ssm_base=ssm_base, env=ENV)),
-        'user': ssm_client.get_parameter(Name='/{ssm_env}/redshift/{env}/username'.format(ssm_base=ssm_base, env=ENV)),
-        'password': ssm_client.get_parameter(Name='/{ssm_env}/redshift/{env}/password'.format(ssm_base=ssm_base, env=ENV), WithDecryption=True)
+        'dbname': common_constants.REDSHIFT_DATABASE_NAME,
+        'host': common_constants.REDSHIFT_CLUSTER_ENDPOINT,
+        'port': common_constants.REDSHIFT_PORT,
+        'user': common_constants.REDSHIFT_USERNAME,
+        'password': common_constants.REDSHIFT_PASSWORD
     }
 
     conn = psycopg2.connect(**connection_detail)

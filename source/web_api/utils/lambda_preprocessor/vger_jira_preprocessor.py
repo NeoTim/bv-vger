@@ -1,6 +1,4 @@
 from __future__ import print_function
-import boto3
-import os
 import re
 from urllib import quote
 
@@ -8,24 +6,17 @@ import requests
 
 from lambda_preprocessor import preprocessor_error_handling, LambdaPreprocessor
 from response_helper import response_formatter
-
-import web_api_constants
+from source.jira_etl.constants import jira_etl_constants
+from source.web_api.utils.constants import web_api_constants
 
 
 class VgerJiraPreprocessor(LambdaPreprocessor):
     def __init__(self, event):
-        ENV = os.environ['ENV']
-        ssm_base = os.environ["VGER_SSM_BASE"]
-        ssm_client = boto3.client('ssm')
-
         LambdaPreprocessor.__init__(self, event)
         self.jira_config = {
-            "JIRA_USER": ssm_client.get_parameter(
-                Name='/{ssm_base}/jira/{env}/username'.format(ssm_base=ssm_base, env=ENV)),
-            "JIRA_PASS": ssm_client.get_parameter(
-                Name='/{ssm_base}/jira/{env}/password'.format(ssm_base=ssm_base, env=ENV)),
-            "JIRA_URL": ssm_client.get_parameter(
-                Name='/{ssm_base}/jira/{env}/host_url'.format(ssm_base=ssm_base, env=ENV))
+            "JIRA_USER": jira_etl_constants.JIRA_USERNAME,
+            "JIRA_PASS": jira_etl_constants.JIRA_PASSWORD,
+            "JIRA_URL": jira_etl_constants.JIRA_BASE_URL
         }
 
     @preprocessor_error_handling

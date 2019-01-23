@@ -1,29 +1,16 @@
 from __future__ import print_function
 import math
 import os
-import boto3
 import boto
 import psycopg2
 from filechunkio import FileChunkIO
 
-import jira_etl_constants
+from source import common_constants
+from source.jira_etl.constants import jira_etl_constants
 
 
 def jiraLoad(data):
-    ENV = os.environ['ENV']
-    ssm_base = os.environ["VGER_SSM_BASE"]
-    ssm_client = boto3.client('ssm')
-
-    # Defining environment variables for accessing private information
-    E_AWS_RS_USER = ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/username'.format(ssm_base=ssm_base, env=ENV), WithDecryption=True)
-    E_AWS_RS_PASS = ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/password'.format(ssm_base=ssm_base, env=ENV), WithDecryption=True)
     teamConfig = data.get('teamConfig')
-
-    # Constants related to the database on the private facing Redshift database
-    BUCKET = jira_etl_constants.S3_ENG_BUCKET
-    DATABASE_NAME = ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/database_name'.format(ssm_base=ssm_base, env=ENV))
-    REDSHIFT_PORT = ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/port'.format(ssm_base=ssm_base, env=ENV))
-    CLUSTER_ENDPOINT = ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/cluster_endpoint'.format(ssm_base=ssm_base, env=ENV))
 
     # Since the script is run on lambda, the only file we can write to is /tmp
     PATH = data.get('csvPath')
@@ -33,7 +20,7 @@ def jiraLoad(data):
 
     # Connect to S3 using boto
     c = boto.connect_s3()
-    b = c.get_bucket(BUCKET)
+    b = c.get_bucket(jira_etl_constants.S3_ENG_BUCKET)
 
     # Find out the size of the file to determine if chunking is needed
     source_size = os.stat(PATH).st_size
@@ -63,14 +50,17 @@ def jiraLoad(data):
         # Finish the upload
         mp.complete_upload()
 
-        conn = psycopg2.connect(dbname=DATABASE_NAME, host=CLUSTER_ENDPOINT, port=REDSHIFT_PORT,
-                                user=E_AWS_RS_USER, password=E_AWS_RS_PASS)
+        conn = psycopg2.connect(dbname=common_constants.REDSHIFT_DATABASE_NAME,
+                                host=common_constants.REDSHIFT_CLUSTER_ENDPOINT,
+                                port=common_constants.REDSHIFT_PORT,
+                                user=common_constants.REDSHIFT_USERNAME,
+                                password=common_constants.REDSHIFT_PASSWORD)
         cur = conn.cursor()
         # Generating the SQL transaction to copy the uploaded file to Redshift
         # Update the lastIssueChange timestamp into team_project
         transactionQuery = "BEGIN TRANSACTION;" \
-                           "COPY issue_change from 's3://" + BUCKET + "/" + fileName + \
-                           "' credentials 'aws_iam_role=arn:aws:iam::" + jira_etl_constants.AWS_ACCOUNT_NUMBER + ":role/vger-python-lambda" + \
+                           "COPY issue_change from 's3://" + jira_etl_constants.S3_ENG_BUCKET + "/" + fileName + \
+                           "' credentials 'aws_iam_role=arn:aws:iam::" + common_constants.AWS_ACCOUNT_ID + ":role/vger-python-lambda" + \
                            "' dateformat 'auto' timeformat 'auto' csv;" \
                            "UPDATE team_project SET last_issue_change='{}' WHERE id={};" \
                            "END TRANSACTION;".format(lastIssueChange, teamConfig.get('id'))

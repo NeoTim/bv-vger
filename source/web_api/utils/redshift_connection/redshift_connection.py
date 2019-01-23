@@ -1,22 +1,17 @@
 from __future__ import print_function
-import boto3
-import os
 import psycopg2
 from psycopg2.extras import execute_values
+from source import common_constants
 
 
 class RedshiftConnection(object):
     def __init__(self):
-        ENV = os.environ['ENV']
-        ssm_base = os.environ["VGER_SSM_BASE"]
-        ssm_client = boto3.client('ssm')
-
         # Defining environment variables for accessing private information
-        self.E_AWS_RS_USER = ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/username'.format(ssm_base=ssm_base, env=ENV), WithDecryption=True)
-        self.E_AWS_RS_PASS = ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/password'.format(ssm_base=ssm_base, env=ENV), WithDecryption=True)
-        self.DATABASE_NAME = ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/database_name'.format(ssm_base=ssm_base, env=ENV))
-        self.REDSHIFT_PORT = ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/port'.format(ssm_base=ssm_base, env=ENV))
-        self.CLUSTER_ENDPOINT = ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/cluster_endpoint'.format(ssm_base=ssm_base, env=ENV))
+        self.E_AWS_RS_USER = common_constants.REDSHIFT_USERNAME
+        self.E_AWS_RS_PASS = common_constants.REDSHIFT_PASSWORD
+        self.DATABASE_NAME = common_constants.REDSHIFT_DATABASE_NAME
+        self.REDSHIFT_PORT = common_constants.REDSHIFT_PORT
+        self.CLUSTER_ENDPOINT = common_constants.REDSHIFT_CLUSTER_ENDPOINT
 
         # Connect to the Vger Redshift DB
         self.conn = psycopg2.connect(dbname=self.DATABASE_NAME, host=self.CLUSTER_ENDPOINT, port=self.REDSHIFT_PORT,

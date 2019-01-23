@@ -1,32 +1,22 @@
 from __future__ import division
-import boto3
-import os
 import requests
 import psycopg2
 import json
-
-import git_etl_constants
+from source import common_constants
+from source.git_etl.constants import git_etl_constants
 
 
 def handler(event, context):
-    ENV = os.environ['ENV']
-    ssm_base = os.environ["VGER_SSM_BASE"]
-    ssm_client = boto3.client('ssm')
-
     # AWS connection init
     connection_detail = {
-        'dbname': ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/database_name'.format(ssm_base=ssm_base, env=ENV)),
-        'host': ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/cluster_endpoint'.format(ssm_base=ssm_base, env=ENV)),
-        'port': ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/port'.format(ssm_base=ssm_base, env=ENV)),
-        'user': ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/username'.format(ssm_base=ssm_base, env=ENV), WithDecryption=True),
-        'password': ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/password'.format(ssm_base=ssm_base, env=ENV), WithDecryption=True)
+        'dbname': common_constants.REDSHIFT_DATABASE_NAME,
+        'host': common_constants.REDSHIFT_CLUSTER_ENDPOINT,
+        'port': common_constants.REDSHIFT_PORT,
+        'user': common_constants.REDSHIFT_USERNAME,
+        'password': common_constants.REDSHIFT_PASSWORD
     }
 
     conn = psycopg2.connect(**connection_detail)
-
-    # Git key
-    E_GIT_API_USER = ssm_client.get_parameter(Name='/{ssm_base}/git/{env}/api_user'.format(ssm_base=ssm_base, env=ENV))
-    E_GIT_API_KEY = ssm_client.get_parameter(Name='/{ssm_base}/git/{env}/api_key'.format(ssm_base=ssm_base, env=ENV), WithDecryption=True)
 
     MINIMUM_RATE_REMAINING = 500
     PAGE_SIZE = 100
@@ -44,7 +34,7 @@ def handler(event, context):
 
     # Init URLs
     git_url = git_etl_constants.GIT_URL
-    detail_pr_url = git_url + repo_name + "/pulls/"
+    detail_pr_url = git_url + "/" + repo_name + "/pulls/"
 
     # Start from the page depends on watermark, ascending order based on created_at timestamp
     page_watermark = objects_added // PAGE_SIZE + 1
@@ -78,7 +68,7 @@ def handler(event, context):
 
     print("Start getting new records on repo {}".format(repo_name))
     # Insert new records
-    r = requests.get(page_url, auth=(E_GIT_API_USER, E_GIT_API_KEY))
+    r = requests.get(page_url, auth=(git_etl_constants.GIT_API_USER, git_etl_constants.GIT_API_KEY))
     if r.ok:
         contents = json.loads(r.content)
         new_records = contents[inpage_watermark:] if contents else None
@@ -116,7 +106,7 @@ def handler(event, context):
             next_page = pagination.get("next")
             if next_page:
                 page_url = next_page["url"]
-                r = requests.get(page_url, auth=(E_GIT_API_USER, E_GIT_API_KEY))
+                r = requests.get(page_url, auth=(git_etl_constants.GIT_API_USER, git_etl_constants.GIT_API_KEY))
                 if r.ok:
                     new_records = json.loads(r.content)
                 else:
@@ -144,7 +134,7 @@ def handler(event, context):
     for idx, open_pr in enumerate(open_prs):
         # Construct url for specific pull request url based on pull number
         open_pr_url = detail_pr_url + str(open_pr[0])
-        r = requests.get(open_pr_url, auth=(E_GIT_API_USER, E_GIT_API_KEY))
+        r = requests.get(open_pr_url, auth=(git_etl_constants.GIT_API_USER, git_etl_constants.GIT_API_KEY))
         if r.ok:
             with conn:
                 with conn.cursor() as cur:

@@ -1,32 +1,24 @@
 from __future__ import print_function
 import json
 import yaml
-import boto3
-import os
 import requests
 import urllib
-import jira_etl_lib
 import psycopg2
 import time
 from jira_transform import jiraTransform
-
-import jira_etl_constants
+from source import common_constants
+from source.jira_etl.lib import jira_etl_lib
+from source.jira_etl.constants import jira_etl_constants
 
 
 def handler(event, context):
-    ENV = os.environ['ENV']
-    ssm_base = os.environ["VGER_SSM_BASE"]
-    ssm_client = boto3.client('ssm')
 
     connection_detail = {
-        'dbname': ssm_client.get_parameter(
-            Name='/{ssm_base}/redshift/{env}/database_name'.format(ssm_base=ssm_base, env=ENV)),
-        'host': ssm_client.get_parameter(
-            Name='/{ssm_base}/redshift/{env}/cluster_endpoint'.format(ssm_base=ssm_base, env=ENV)),
-        'port': ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/port'.format(ssm_base=ssm_base, env=ENV)),
-        'user': ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/username'.format(ssm_base=ssm_base, env=ENV), WithDecryption=True),
-        'password': ssm_client.get_parameter(
-            Name='/{ssm_base}/redshift/{env}/password'.format(ssm_base=ssm_base, env=ENV), WithDecryption=True)
+        'dbname': common_constants.REDSHIFT_DATABASE_NAME,
+        'host': common_constants.REDSHIFT_CLUSTER_ENDPOINT,
+        'port': common_constants.REDSHIFT_PORT,
+        'user': common_constants.REDSHIFT_USERNAME,
+        'password': common_constants.REDSHIFT_PASSWORD
     }
 
     conn = psycopg2.connect(**connection_detail)
@@ -68,9 +60,6 @@ def handler(event, context):
 
             cur.execute(updateLastETLRunQuery, (int(start_time), event["id"]))
 
-    E_JH_USER = ssm_client.get_parameter(Name='/{ssm_base}/jira/{env}/username'.format(ssm_base=ssm_base, env=ENV))
-    E_JH_PASS = ssm_client.get_parameter(Name='/{ssm_base}/jira/{env}/password'.format(ssm_base=ssm_base, env=ENV), WithDecryption=True)
-
     # Write file headers for the CSV file
     base_header = ['changedTimestamp', 'issueKey', 'fieldName', 'prevValue', 'newValue']
     base_columns = ['changedTimestamp', 'issueKey', 'fieldName', 'prevValue', 'newValue']
@@ -102,20 +91,20 @@ def handler(event, context):
 
     queryString = urllib.quote(query, safe='')
     queryString += '&fields=*none&maxResults=0'
-    pageURL = jira_etl_constants.JQL_SEARCH_URL.format(queryString)
+    pageURL = jira_etl_constants.JQL_SEARCH_URL.format(query_parameters=queryString)
 
     # Should not use jira client interface here
     # Jira client returns entire issue list although
     # we are only concerned about meta data containing total number of issues here
-    r = requests.get(pageURL, auth=(E_JH_USER, E_JH_PASS))
+    response = requests.get(pageURL, auth=(jira_etl_constants.JIRA_USERNAME, jira_etl_constants.JIRA_PASSWORD))
 
-    if int(r.status_code) == 200:
-        content = r.json()
+    if int(response.status_code) == 200:
+        content = response.json()
         dump = json.dumps(content)
         yamlObj = yaml.safe_load(dump)
         totalIssues = yamlObj['total']
     else:
-        print("ERROR: Status code: {} returned".format(int(r.status_code)))
+        print("ERROR: Status code: {} returned".format(int(response.status_code)))
         return
 
     print("Total issues: {}".format(totalIssues))

@@ -3,8 +3,7 @@ import boto3
 import os
 import requests
 from redshift_connection import RedshiftConnection
-
-import web_api_constants
+from source.git_etl.constants import git_etl_constants
 
 
 def response_formatter(status_code='400', body={'message': 'error'}):
@@ -38,17 +37,9 @@ def handler(event, context):
 
     # Validate repository names
     try:
-        ENV = os.environ['ENV']
-        ssm_base = os.environ["VGER_SSM_BASE"]
-        ssm_client = boto3.client('ssm')
-
-        GIT_API_USER = ssm_client.get_parameter(
-            Name='/{ssm_base}/git/{env}/api_user'.format(ssm_base=ssm_base, env=ENV))
-        GIT_API_KEY = ssm_client.get_parameter(
-            Name='/{ssm_base}/git/{env}/api_key'.format(ssm_base=ssm_base, env=ENV), WithDecryption=True)
         for repo in repos:
-            GITHUB_API = web_api_constants.GITHUB_API_URL.format(repo)
-            r = requests.get(GITHUB_API, headers={'Authorization': 'token %s' % GIT_API_KEY})
+            GITHUB_API = git_etl_constants.GIT_REPO_URL.format(repo=repo)
+            r = requests.get(GITHUB_API, headers={'Authorization': 'token %s' % git_etl_constants.GIT_API_KEY})
             if r.status_code != 200:
                 payload = {'message': 'Invalid repository name: \'{}\''.format(repo)}
                 return response_formatter(status_code='400', body=payload)

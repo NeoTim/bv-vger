@@ -1,6 +1,4 @@
 from __future__ import print_function
-import boto3
-import os
 import psycopg2
 import datetime
 
@@ -9,6 +7,7 @@ from work_type_parser import WorkTypeParser
 from query_parameters import QueryParameters
 from redshift_connection import RedshiftConnection
 from response_helper import response_formatter
+from source import common_constants
 
 
 def handler(event, context):
@@ -34,7 +33,7 @@ def handler(event, context):
         quarters = queryParameters.getQuarterDates().split(',')
         workTypes = queryParameters.getWorktypes()
 
-        workTypeParser = WorkTypeParser(workTypes,projectID)
+        workTypeParser = WorkTypeParser(workTypes, projectID)
         workTypeParser.validateWorkTypes(redshift.getCursor(), redshift.getConn())
 
     except ValueError as err:
@@ -43,16 +42,12 @@ def handler(event, context):
         return response_formatter(status_code=400, body=payload)
 
     # Init redshift connection
-    ENV = os.environ['ENV']
-    ssm_base = os.environ["VGER_SSM_BASE"]
-    ssm_client = boto3.client('ssm')
-
     connection_detail = {
-        'dbname': ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/database_name'.format(ssm_base=ssm_base, env=ENV)),
-        'host': ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/cluster_endpoint'.format(ssm_base=ssm_base, env=ENV)),
-        'port': ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/port'.format(ssm_base=ssm_base, env=ENV)),
-        'user': ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/username'.format(ssm_base=ssm_base, env=ENV), WithDecryption=True),
-        'password': ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/password'.format(ssm_base=ssm_base, env=ENV), WithDecryption=True)
+        'dbname': common_constants.REDSHIFT_DATABASE_NAME,
+        'host': common_constants.REDSHIFT_CLUSTER_ENDPOINT,
+        'port': common_constants.REDSHIFT_PORT,
+        'user': common_constants.REDSHIFT_USERNAME,
+        'password': common_constants.REDSHIFT_PASSWORD
     }
     conn = psycopg2.connect(**connection_detail)
 
@@ -86,7 +81,7 @@ def handler(event, context):
             cur.execute(work_state_query, (projectID,))
             work_states_results = cur.fetchall()
             lead_time_states = [work_state for work_state, work_seq in work_states_results if
-                            start_state_seq <= work_seq < end_state_seq]
+                                start_state_seq <= work_seq < end_state_seq]
             work_states_dict = {work_seq: work_state for work_state, work_seq in work_states_results}
 
     # Filter out invalid issue types and resolutions
@@ -154,7 +149,7 @@ def handler(event, context):
     # still need to filter out issues that were closed before or after dateSince/DataUntil
     counter = 0
     issuesToDelete = []
-    #since poping shifts the indices, each time something needs to be poped, must be subtracted by number of pops needing to be done
+    # since poping shifts the indices, each time something needs to be poped, must be subtracted by number of pops needing to be done
     numOfPops = 0
 
     for issue in issues:
@@ -178,9 +173,10 @@ def handler(event, context):
                 issue["end_state_time"] = state_transition_time
                 break
 
-        #if issue was completed before or after the set amount of time passed into leadtime script, remove it from issues
-        if ("end_state_time" in issue) and (issue["end_state_time"] < int(dateSince) or issue["end_state_time"] > int(dateUntil)) and isIssueDeleted == False:
-            issuesToDelete.append(counter-numOfPops)
+        # if issue was completed before or after the set amount of time passed into leadtime script, remove it from issues
+        if ("end_state_time" in issue) and (issue["end_state_time"] < int(dateSince) or issue["end_state_time"] > int(
+                dateUntil)) and isIssueDeleted == False:
+            issuesToDelete.append(counter - numOfPops)
             numOfPops = numOfPops + 1
             isIssueDeleted = True
 
@@ -188,17 +184,17 @@ def handler(event, context):
         if issue.get("start_state_time") and issue.get("end_state_time"):
             start_time = datetime.datetime.fromtimestamp(issue["start_state_time"])
             end_time = datetime.datetime.fromtimestamp(issue["end_state_time"])
-            issue_working_days = TimeIntervalCalculator.workday_diff(start_time, end_time)             
+            issue_working_days = TimeIntervalCalculator.workday_diff(start_time, end_time)
             issue["leadtime"]["Overall"] = float("{0:.2f}".format(issue_working_days))
         # if needed parameters don't exist, remove from loop
         elif isIssueDeleted == False:
-            issuesToDelete.append(counter-numOfPops)
+            issuesToDelete.append(counter - numOfPops)
             numOfPops = numOfPops + 1
-            isIssueDeleted = True            
+            isIssueDeleted = True
 
-        #remove issue if it is less than 15 minutes (0.01) to prevent issues from being displayed on chart as 0
+            # remove issue if it is less than 15 minutes (0.01) to prevent issues from being displayed on chart as 0
         if ("Overall" in issue["leadtime"]) and issue["leadtime"]["Overall"] < 0.01 and isIssueDeleted == False:
-            issuesToDelete.append(counter-numOfPops)
+            issuesToDelete.append(counter - numOfPops)
             numOfPops = numOfPops + 1
             isIssueDeleted = True
 
@@ -225,9 +221,10 @@ def handler(event, context):
             state_transition_time = new_state_transition_time
 
     payload = []
-    #create graph data set from data
+    # create graph data set from data
     for issue in issues:
-        obj = {'name': issue['issue_name'], 'workingDays':issue['leadtime']['Overall'], 'endTime': issue['end_state_time']}
+        obj = {'name': issue['issue_name'], 'workingDays': issue['leadtime']['Overall'],
+               'endTime': issue['end_state_time']}
         payload.append(obj)
 
     return response_formatter(status_code=200, body=payload)

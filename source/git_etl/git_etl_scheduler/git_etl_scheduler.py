@@ -1,33 +1,19 @@
 from __future__ import print_function
 import time
-import os
 
 # These packages are needed in the ZIP file uploaded into Lambda
+from source import common_constants
 import boto3
 import psycopg2
 import json
 
 
 def handler(event, context):
-    # TODO is there a better way to set this?
-    ENV = os.environ['ENV']
-    ssm_base = os.environ["VGER_SSM_BASE"]
-
-    ssm_client = boto3.client('ssm')
-
-    # Defining Redshift connection
-    DATABASE_NAME = ssm_client.get_parameter(
-        Name='/{ssm_base}/redshift/{env}/database_name'.format(ssm_base=ssm_base, env=ENV))
-    REDSHIFT_PORT = ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/port'.format(ssm_base=ssm_base, env=ENV))
-    CLUSTER_ENDPOINT = ssm_client.get_parameter(
-        Name='/{ssm_base}/redshift/{env}/cluster_endpoint'.format(ssm_base=ssm_base, env=ENV))
-    E_AWS_RS_USER = ssm_client.get_parameter(
-        Name='/{ssm_base}/redshift/{env}/username'.format(ssm_base=ssm_base, env=ENV), WithDecryption=True)
-    E_AWS_RS_PASS = ssm_client.get_parameter(
-        Name='/{ssm_base}/redshift/{env}/password'.format(ssm_base=ssm_base, env=ENV), WithDecryption=True)
-
-    conn = psycopg2.connect(dbname=DATABASE_NAME, host=CLUSTER_ENDPOINT, port=REDSHIFT_PORT,
-                            user=E_AWS_RS_USER, password=E_AWS_RS_PASS)
+    conn = psycopg2.connect(dbname=common_constants.REDSHIFT_DATABASE_NAME,
+                            host=common_constants.REDSHIFT_CLUSTER_ENDPOINT,
+                            port=common_constants.REDSHIFT_PORT,
+                            user=common_constants.REDSHIFT_USERNAME,
+                            password=common_constants.REDSHIFT_PASSWORD)
     cur = conn.cursor()
 
     # Get all the repos in the Vger database
@@ -56,7 +42,7 @@ def handler(event, context):
             payload = {"repo": repo, "table": event.get("table") if event.get("table") else "pull_requests"}
             json_payload = json.dumps(payload)
             print("Started ETL for " + repo + " pull request")
-            function_name = "vger-sls-git-etl-pr-{}".format(ENV)
+            function_name = "vger-sls-git-etl-pr-{}".format(common_constants.ENV)
             lambda_client.invoke(FunctionName=function_name, InvocationType="Event", Payload=json_payload)
         elif hour in [1, 5, 9, 13, 17, 21]:
             # NOTE equivalent to 19, 23, 3, 7, 11, 15 in CST. Plus 1 if in DST.
@@ -67,5 +53,5 @@ def handler(event, context):
             }
             json_payload = json.dumps(payload)
             print("Started ETL for " + repo + " tag")
-            function_name = "vger-sls-git-etl-tag-{}".format(ENV)
+            function_name = "vger-sls-git-etl-tag-{}".format(common_constants.ENV)
             lambda_client.invoke(FunctionName=function_name, InvocationType="Event", Payload=json_payload)

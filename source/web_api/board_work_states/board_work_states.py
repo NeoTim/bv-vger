@@ -1,10 +1,9 @@
-import boto3
-import os
 import json
 import requests
-from redshift_connection import RedshiftConnection
+from source.web_api.utils.redshift_connection import RedshiftConnection
+from source.web_api.utils.constants import web_api_constants
+from source.jira_etl.constants import jira_etl_constants
 
-import web_api_constants
 
 def response_formatter(status_code='400', body={'message': 'error'}):
     api_response = {
@@ -16,6 +15,7 @@ def response_formatter(status_code='400', body={'message': 'error'}):
         'body': json.dumps(body)
     }
     return api_response
+
 
 def find_default_start_state(work_states):
     default_state = ''
@@ -70,17 +70,10 @@ def handler(event, context):
         payload = {'message': 'Internal error'}
         return response_formatter(status_code='500', body=payload)
 
-    ENV = os.environ['ENV']
-    ssm_base = os.environ["VGER_SSM_BASE"]
-    ssm_client = boto3.client('ssm')
-
-    JH_USER = ssm_client.get_parameter(Name='/{ssm_base}/jira/{env}/username'.format(ssm_base=ssm_base, env=ENV))
-    JH_PASS = ssm_client.get_parameter(Name='/{ssm_base}/jira/{env}/password'.format(ssm_base=ssm_base, env=ENV), WithDecryption=True)
-    JH_JIRAURL = ssm_client.get_parameter(Name='/{ssm_base}/jira/{env}/host_url'.format(ssm_base=ssm_base, env=ENV))
     # connect to jira api and retrieve board configuration
     try:
-        JIRA_BOARD_CONFIG_API = web_api_constants.CONFIG_URL.format(JH_JIRAURL, board_id)
-        board_config = requests.get(JIRA_BOARD_CONFIG_API, auth=(JH_USER, JH_PASS)).json()
+        JIRA_BOARD_CONFIG_API = web_api_constants.CONFIG_URL.format(jira_etl_constants.JIRA_BASE_URL, board_id)
+        board_config = requests.get(JIRA_BOARD_CONFIG_API, auth=(jira_etl_constants.JIRA_USERNAME, jira_etl_constants.JIRA_PASSWORD)).json()
 
         # Ignore the first empty backlog column
         first_column = board_config['columnConfig']['columns'][0]
@@ -93,7 +86,7 @@ def handler(event, context):
                 "status": []
             }
             for status in column['statuses']:
-                status_object = requests.get(status['self'], auth=(JH_USER, JH_PASS)).json()
+                status_object = requests.get(status['self'], auth=(jira_etl_constants.JIRA_USERNAME, jira_etl_constants.JIRA_PASSWORD)).json()
                 state['status'].append(str(status_object['name']))  # convert unicode string to regular string
             work_states.append(state)
             print(state)

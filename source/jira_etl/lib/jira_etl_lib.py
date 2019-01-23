@@ -1,8 +1,9 @@
 from jira import JIRA
 import datetime
-import time
+# import time
 from dateutil.parser import parse
 import pytz
+
 
 def get_jira_client(connection):
     url = connection['domain']
@@ -18,6 +19,7 @@ def get_jira_client(connection):
 
     return jira
 
+
 def create_final_issue_jql(teamConfig, dateSinceTimestamp):
     query = "({})".format(teamConfig.get('issue_filter'))
 
@@ -32,6 +34,7 @@ def create_final_issue_jql(teamConfig, dateSinceTimestamp):
 
     return query
 
+
 def date_str_to_epoch_timestamp(jira_str):
     # date_str_to_epoch_timestamp: converts a string into epoch timestamp
     # jira API returns string in format iso 8601. ex:'2017-07-03T17:38:01.000-0500'
@@ -42,6 +45,7 @@ def date_str_to_epoch_timestamp(jira_str):
     # Find the difference between two dates and return the number of seconds
     changedTimestampEPOCH = changedDateTime - startEpoch
     return long(changedTimestampEPOCH.total_seconds())
+
 
 def epoch_timestamp_to_date_str(last_change_epoch_timestamp):
     # epoch_timestamp_to_query_str: converts a given epoch timestamp into a string

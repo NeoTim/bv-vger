@@ -1,9 +1,8 @@
 from __future__ import print_function
-import boto3
-import os
 import json
 import urllib
 import psycopg2
+from source import common_constants
 
 
 def handler(event, context):
@@ -18,20 +17,12 @@ def handler(event, context):
         }
         return response
 
-    # Defining environment variables for accessing private information
-    ENV = os.environ['ENV']
-    ssm_base = os.environ["VGER_SSM_BASE"]
-    ssm_client = boto3.client('ssm')
-
-    E_AWS_RS_USER = ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/username'.format(ssm_base=ssm_base, env=ENV), WithDecryption=True)
-    E_AWS_RS_PASS = ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/password'.format(ssm_base=ssm_base, env=ENV), WithDecryption=True)
-    DATABASE_NAME = ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/database_name'.format(ssm_base=ssm_base, env=ENV))
-    REDSHIFT_PORT = ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/port'.format(ssm_base=ssm_base, env=ENV))
-    CLUSTER_ENDPOINT = ssm_client.get_parameter(Name='/{ssm_base}/redshift/{env}/cluster_endpoint'.format(ssm_base=ssm_base, env=ENV))
-
     # Connect to the Vger Redshift DB
-    conn = psycopg2.connect(dbname=DATABASE_NAME, host=CLUSTER_ENDPOINT, port=REDSHIFT_PORT,
-                            user=E_AWS_RS_USER, password=E_AWS_RS_PASS)
+    conn = psycopg2.connect(dbname=common_constants.REDSHIFT_DATABASE_NAME,
+                            host=common_constants.REDSHIFT_CLUSTER_ENDPOINT,
+                            port=common_constants.REDSHIFT_PORT,
+                            user=common_constants.REDSHIFT_USERNAME,
+                            password=common_constants.REDSHIFT_PASSWORD)
     cur = conn.cursor()
 
     selectIDQuery = "SELECT name, id FROM team WHERE id = %s"
@@ -64,14 +55,14 @@ def handler(event, context):
 
     try:
         projectName = (event.get('queryStringParameters').get('name'))
-    except Exception as e:
+    except Exception:
         projectName = None
 
     try:
         if projectName is not None:
             try:
                 decodedProject = urllib.unquote(projectName).decode('utf8')
-            except Exception as e:
+            except Exception:
                 payload = {"message": "Could not decode given project name parameter: {}".format(projectName)}
                 response = {
                     "statusCode": 400,

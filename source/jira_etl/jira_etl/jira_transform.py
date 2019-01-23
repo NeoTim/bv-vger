@@ -1,26 +1,20 @@
 from __future__ import print_function
-import boto3
 import os
 
 # These packages are needed in the ZIP file uploaded into Lambda
 from jira_load import jiraLoad
 import pandas as pd
-import jira_etl_lib
+from source.jira_etl.lib import jira_etl_lib
+from source.jira_etl.constants import jira_etl_constants
+
 
 def find_issues(initialLoad=True, startAt=0, batchSize=1000, getTotal=False, timestampSince=0, teamConfig={}):
-    ENV = os.environ['ENV']
-    ssm_base = os.environ["VGER_SSM_BASE"]
-    ssm_client = boto3.client('ssm')
-
-    E_JH_USER = ssm_client.get_parameter(Name='/{ssm_base}/jira/{env}/username'.format(ssm_base=ssm_base, env=ENV))
-    E_JH_PASS = ssm_client.get_parameter(Name='/{ssm_base}/jira/{env}/password'.format(ssm_base=ssm_base, env=ENV), WithDecryption=True)
-    E_JH_JIRAURL = ssm_client.get_parameter(Name='/{ssm_base}/jira/{env}/host_url'.format(ssm_base=ssm_base, env=ENV))
-
     #  JIRA client connection and session
-    connection = {}
-    connection['username'] = E_JH_USER
-    connection['password'] = E_JH_PASS
-    connection['domain'] = E_JH_JIRAURL
+    connection = {
+        'username': jira_etl_constants.JIRA_USERNAME,
+        'password': jira_etl_constants.JIRA_PASSWORD,
+        'domain': jira_etl_constants.JIRA_BASE_URL
+    }
 
     try:
         jira_c = jira_etl_lib.get_jira_client(connection)
@@ -41,6 +35,7 @@ def find_issues(initialLoad=True, startAt=0, batchSize=1000, getTotal=False, tim
     print ("Fetched " + str(len(issueList)) + " issues")
 
     return (issueList)
+
 
 def getDataFrame(batchSize=1000, startAt=0, timestampSince=0, initialLoad=True, teamConfig={}):
     lastIssueChange = 0
@@ -131,6 +126,7 @@ def getDataFrame(batchSize=1000, startAt=0, timestampSince=0, initialLoad=True, 
                       columns=['teamProjectID', 'changed', 'issueKey', 'fieldName', 'prevValue', 'newValue', 'issueType', 'resolution', 'subTask'])
 
     return [df, lastIssueChange]
+
 
 def jiraTransform(data):
     filePart = data.get('filePart')
