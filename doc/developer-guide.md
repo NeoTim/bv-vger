@@ -68,6 +68,8 @@ Currently expect two environment variables to be present for vger to function
 #### Deployment Preparation
 
 1. Make sure you have installed `Node.js` and install `serverless` via `npm`.
+    * Serverless needs to be version 1.22.0 or higher to work with AWS SSM
+    * `npm install -g serverless@1.22.0`
 2. Install [Docker]((https://docs.docker.com/docker-for-mac/install/#install-and-run-docker-for-mac)).
 
 #### Configuration Preparation

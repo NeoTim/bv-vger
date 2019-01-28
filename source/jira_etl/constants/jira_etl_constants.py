@@ -14,4 +14,5 @@ JIRA_BASE_URL = ssm_client.get_parameter(
 
 JQL_SEARCH_URL = JIRA_BASE_URL + '/rest/api/latest/search?jql={query_parameters}'
 
-S3_ENG_BUCKET = ''
+S3_ENG_BUCKET = ssm_client.get_parameter(
+    Name='/{ssm_base}/s3/{env}/bucket_name'.format(ssm_base=ssm_base, env=ENV))['Parameter']['Value']
