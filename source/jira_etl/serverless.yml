@@ -20,7 +20,7 @@ provider:
     JH_JIRAURL: ${ssm:/${opt:ssm-store}/jira/${opt:stage}/host_url}
     JH_USER: ${ssm:/${opt:ssm-store}/jira/${opt:stage}/username~true}
     JH_PASS: ${ssm:/${opt:ssm-store}/jira/${opt:stage}/password~true}
-    ENV: ${opt:ssm-store}
+    ENV: ${opt:stage}
     # I would like to remove these parameters from this serverless call
     GIT_API_USER: ${ssm:/${opt:ssm-store}/git/${opt:stage}/api_user~true}
     GIT_API_KEY: ${ssm:/${opt:ssm-store}/git/${opt:stage}/api_key~true}

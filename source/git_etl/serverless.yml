@@ -19,7 +19,7 @@ provider:
     CLUSTER_ENDPOINT: ${ssm:/${opt:ssm-store}/redshift/${opt:stage}/cluster_endpoint}
     GIT_API_USER: ${ssm:/${opt:ssm-store}/git/${opt:stage}/api_user~true}
     GIT_API_KEY: ${ssm:/${opt:ssm-store}/git/${opt:stage}/api_key~true}
-    ENV: ${opt:ssm-store}
+    ENV: ${opt:stage}
     # I would like to remove these credentials from this serverless call
     JH_JIRAURL: ${ssm:/${opt:ssm-store}/jira/${opt:stage}/host_url}
     JH_USER: ${ssm:/${opt:ssm-store}/jira/${opt:stage}/username~true}
