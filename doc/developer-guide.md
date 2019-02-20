@@ -76,7 +76,7 @@ Currently expect two environment variables to be present for vger to function
 We are using SSM Parameter store for some configuration details. These details are expected to be available from the parameter store:
 
 * `/<your_parameter_prefix>/team` This is used to tag AWS Resources
-* `/<your_parameter_prefix>/role` AWS Role for the Vger Service
+* `/<your_parameter_prefix>/<env>/role` AWS Role for the Vger Service
 * `/<your_parameter_prefix>/redshift/<env>/password` SecureString password for your redshift instance
 * `/<your_parameter_prefix>/redshift/<env>/username` Username for Vger's access to redshift
 * `/<your_parameter_prefix>/redshift/<env>/cluster_endpoint` The Endpoint of the redshift cluster
