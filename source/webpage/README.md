@@ -8,6 +8,10 @@ AngularJS v2
 + material angularjs v1.1.5
 + ng-csv v0.3.6
 + [angular-google-chart](https://github.com/angular-google-chart/angular-google-chart)
+
+## JavaScript Version
+ECMAScript 6
+
 # Run locally
 
 ```

@@ -9,13 +9,13 @@
     .factory('dateService', dateService);
 
     function dateService() {
-        var data = {
+        let data = {
             dateSince: '',
             dateUntil: '',
             days: 0
         };
-        
-        var service = {
+
+        return {
             getDateSince: getDateSince,
             setDateSince: setDateSince,
             getDateUntil: getDateUntil,
@@ -23,8 +23,6 @@
             getDays: getDays,
             setDays: setDays
         };
-        
-        return service;
 
         function getDateSince() {
             return data.dateSince;
@@ -50,5 +48,4 @@
             data.days = days;
         }
     }
-
 })();

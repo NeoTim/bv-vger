@@ -10,9 +10,9 @@
     
     dialogController.$inject = ['$scope', '$rootScope', '$window', 'configurationsService', '$mdDialog', '$location'];
     function dialogController($scope, $rootScope, $window, configurationsService, $mdDialog, $location) {
-        var vm = this; // view-model
+        let view_model = this; // view-model
 
-        vm.addTeam = function(ev) {
+        view_model.addTeam = function(ev) {
             $mdDialog.show({
                 controller: DialogController,
                 templateUrl: 'addTeam.tmpl.html',
@@ -23,7 +23,7 @@
             });
         };
         
-        vm.addProject = function(ev) {
+        view_model.addProject = function(ev) {
             $mdDialog.show({
                 controller: ProjectDialogController,
                 templateUrl: 'addProject.tmpl.html',
@@ -46,7 +46,7 @@
 
             $scope.checkInput = function() {    
                 try{
-                    var input = document.getElementById("teamName")
+                    let input = document.getElementById("teamName");
                     if($scope.teamName.length == null || $scope.teamName.length < 3) {
                         input.setAttribute('list', "");
                     }
@@ -67,7 +67,7 @@
                 $scope.loading = true;
                 
                 // Create team
-                var promiseCreateTeam = configurationsService.createTeam($scope.teamName);
+                let promiseCreateTeam = configurationsService.createTeam($scope.teamName);
                 promiseCreateTeam.then(function(response) {
                     // Parse the id of the team that has been created
                     console.log(response);
@@ -79,7 +79,7 @@
                     }
                     
                     // Create project
-                    var promiseCreateProject = configurationsService.createProject($scope.teamId, $scope.projectName, $scope.boardName, $scope.repoNames);
+                    let promiseCreateProject = configurationsService.createProject($scope.teamId, $scope.projectName, $scope.boardName, $scope.repoNames);
                     promiseCreateProject.then(function(response) {
                         // $scope.validationTeamSuccessMessage = 'Successfully created team project!';
                         $mdDialog.hide();
@@ -129,11 +129,11 @@
                 }
 
                 // Create project
-                var promiseCreateProject = configurationsService.createProject($scope.teamId, $scope.projectName, $scope.boardName, $scope.repoNames);
+                let promiseCreateProject = configurationsService.createProject($scope.teamId, $scope.projectName, $scope.boardName, $scope.repoNames);
                 console.log($scope.projectName, $scope.boardName, $scope.repoNames);
                 promiseCreateProject.then(function(response) {
                     console.log(response);
-                    if (response['status'] == '201') {
+                    if (response['status'] === '201') {
                         // $scope.validationProjectSuccessMessage = 'Successfully created team project!';
                         $mdDialog.hide();
                         
@@ -143,7 +143,6 @@
                         $window.sessionStorage.selectedProjectName =  response['data']['name'];
                         
                         $location.path('/metrics').search({newTeamProject: 'true'});
-
                     }
                 }).catch(function(errorResponse){
                     console.log(errorResponse);
@@ -154,5 +153,4 @@
             }
         }
     }
-
 })();

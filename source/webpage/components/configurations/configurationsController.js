@@ -99,7 +99,7 @@
 
         
         var issueSuccess = false;
-        vm.loading = false;
+        Main.loading = false;
         getSessionScope();
         getConfiguration();
 
@@ -531,7 +531,7 @@
         }
         
         function updateProjectSettings() {
-            vm.loading = true;
+            Main.loading = true;
             updateIssues();
         }
         
@@ -558,7 +558,7 @@
                     console.log(errorResponse);
                     warningToast(errorResponse['data']['message']);
                 }).then(function(){
-                    vm.loading = false;
+                    Main.loading = false;
                 });
             }
         }
@@ -584,7 +584,7 @@
         }
         
         function updateWorkTypes() {
-            vm.loading = true;
+            Main.loading = true;
             if(vm.selectedProject) {
                 // Build POST data body
                 var workTypePostBody = {};
@@ -605,13 +605,13 @@
                     console.log(errorResponse);
                     warningToast(errorResponse['data']['message']);
                 }).then(function() {
-                    vm.loading = false;
+                    Main.loading = false;
                 });
             }
         }
         
         function resetToBoard() {
-            vm.loading = true;
+            Main.loading = true;
             var promiseBoardWorkStatesConfiguration = configurationsService.getBoardWorkStatesConfiguration(vm.selectedProject.id);
             promiseBoardWorkStatesConfiguration.then(function(response) {
                 if (response['status'] == '200') {
@@ -654,12 +654,12 @@
                 console.log(errorResponse);
                 warningToast(errorResponse['data']['message']);
             }).then(function() {
-                vm.loading = false;
+                Main.loading = false;
             });
         }
         
         function updateWorkStates() {
-            vm.loading = true;
+            Main.loading = true;
             if(vm.selectedProject) {
                 // Build POST data body
                 var workStates = [];
@@ -701,7 +701,7 @@
                     console.log(errorResponse);
                     warningToast(errorResponse['data']['message']);
                 }).then(function() {
-                    vm.loading = false;
+                    Main.loading = false;
                 });
             }
         }

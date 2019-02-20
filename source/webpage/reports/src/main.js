@@ -1,30 +1,30 @@
 import React from 'react';
-import { Chart } from 'react-google-charts';
+import {Chart} from 'react-google-charts';
 
-import { constants } from './reportConstants.js';
+import {constants} from './reportConstants.js';
 
-var i = 0;
-var j = 0;
-var k = 0;
-var rawScatterChartData = [];
-var rawThroughputData = [];
+let i = 0;
+let j = 0;
+let k = 0;
+let rawScatterChartData = [];
+let rawThroughputData = [];
 
 function openIssueInJIRA(Chart, point){
-  var issueID = rawScatterChartData[point].name;
-  var url = constants.JIRAURL + "browse/" + issueID;
+  let issueID = rawScatterChartData[point].name;
+  let url = constants.JIRAURL + "browse/" + issueID;
   window.open(url, '_blank');
 }
 
 class Main extends React.Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
   
     this.chartEvents = [
       {
         eventName: 'select',
         callback(Chart) {
           // Returns Chart so you can access props and the ChartWrapper object from chart.wrapper
-          var selected = Chart.chart.getSelection()[0]['row'];
+          let selected = Chart.chart.getSelection()[0]['row'];
           openIssueInJIRA(Chart, selected)
         },
       },
@@ -66,29 +66,29 @@ class Main extends React.Component {
     this.chainFunctionCalls = this.chainFunctionCalls.bind(this);
     this.showChart = this.showChart.bind(this);
     this.toggleFullScreen = this.toggleFullScreen.bind(this);
-    this.loading = this.loading.bind(this);
+    Main.loading = Main.loading.bind(this);
     this.noLeadTimeData = this.noLeadTimeData.bind(this);
   }
 
   //determine all the quarter year end dates
   setQuarterEndDates(){
-    var reference = this;
+    let reference = this;
 
     return new Promise(function(){
       //determine which quarter currently in
       //using only month and day offsets all dates to 2001 for checking closest quarter
-      var todayDateToString = reference.state.todaysDate.getMonth()+1 + "/" + reference.state.todaysDate.getDate();
-      var todaysDateToMS = new Date(todayDateToString).getTime();
-      
+      let todayDateToString = reference.state.todaysDate.getMonth() + 1 + "/" + reference.state.todaysDate.getDate();
+      let todaysDateToMS = new Date(todayDateToString).getTime();
+
       //differentiate between one of the 4 quarters and unassigned (unfound)
-      var closestQuarterIndex = -1; 
-      
+      let closestQuarterIndex = -1;
+
       //find most recent quarter end
       for(i=0; i<constants.QUARTERDATESORGANIZED.length; i++){
-        var quarterDateToMS = new Date(constants.QUARTERDATESORGANIZED[i]);
+        let quarterDateToMS = new Date(constants.QUARTERDATESORGANIZED[i]);
         quarterDateToMS = quarterDateToMS.getTime();
 
-        var thisQuarterDifference = todaysDateToMS - quarterDateToMS;
+        let thisQuarterDifference = todaysDateToMS - quarterDateToMS;
         if(thisQuarterDifference < 0){
           closestQuarterIndex = i-1;
           break;
@@ -97,21 +97,21 @@ class Main extends React.Component {
       reference.mostRecentQuarterIndex = closestQuarterIndex;
 
       //using most recent quarter, set first amount of quarters up to and including this quarter equal to current year
-      var currYear = reference.state.todaysDate.getFullYear();
-      for(var j = reference.mostRecentQuarterIndex; j > -1; j--){
+      let currYear = reference.state.todaysDate.getFullYear();
+      for(let j = reference.mostRecentQuarterIndex; j > -1; j--){
         reference.state.quarterEnddatesArray.push(constants.QUARTERDATESORGANIZED[j]+"/"+currYear);  
       }
       
       //set remaining quarters while decrementing year
-      var counter = reference.state.quarterEnddatesArray.length;
-      var loopCounter = 3;
+      let counter = reference.state.quarterEnddatesArray.length;
+      let loopCounter = 3;
       currYear = currYear - 1;
       while(counter < reference.state.maxAmountOfQuarters){
         if(loopCounter === -1){
           currYear = currYear - 1;
           loopCounter = 3;
         }
-        reference.state.quarterEnddatesArray.push(constants.QUARTERDATESORGANIZED[loopCounter]+"/"+currYear)  
+        reference.state.quarterEnddatesArray.push(constants.QUARTERDATESORGANIZED[loopCounter]+"/"+currYear);
         counter++;
         loopCounter--;
       }
@@ -121,14 +121,14 @@ class Main extends React.Component {
   getThroughputQuarterlyHistory() {
     //all parameters are passed in as props from index.js
 
-    var projectID = this.props.data.projectId;
-    var quarterEndDatesInSQLMS = [];
+    let projectID = this.props.data.projectId;
+    let quarterEndDatesInSQLMS = [];
 
     for(i = 0; i < this.state.quarterEnddatesArray.length; i++)
       quarterEndDatesInSQLMS.push(Math.floor(new Date(this.state.quarterEnddatesArray[i]).getTime()/1000));
 
-    var workTypeStr = this.props.data.selectedWorkTypes;
-    var historyStr = 'quarterly/history'; 
+    let workTypeStr = this.props.data.selectedWorkTypes;
+    let historyStr = 'quarterly/history';
 
     //find API gateway type (Prod, QA)
     if(this.props.data.baseURL.indexOf(constants.APIGATEWAYPRODURL) >= 0)
@@ -139,21 +139,20 @@ class Main extends React.Component {
     else if(this.props.data.baseURL.indexOf("localhost") >= 0 || this.props.data.baseURL.indexOf("127.0.0.1") >= 0)
       this.apiGatewayType = constants.APIGATEWAYQA;
 
-    var historyAPIStr = this.apiGatewayType + 'project/' + projectID  + '/' + 'throughput/' + historyStr + '?';
+    let historyAPIStr = this.apiGatewayType + 'project/' + projectID + '/' + 'throughput/' + historyStr + '?';
 
     //need comma delimited string of worktypes
     if (workTypeStr !== '') historyAPIStr += '&workTypes=' + workTypeStr;
 
     // need to build string of quarter end dates to pass into script, attach first element so that remaining are comma separated
     // if 4 quarters, need to pass in 5 dates (from "q0 end" [aka last finished quarter before q1] to q1 end as Q1, from q1 end to q2 end as Q2, from q2 to q3 as Q3, from q3 to q4 as Q4)
-    var quarterEndDatesString = "&dates=" + quarterEndDatesInSQLMS[0];
-    
-    for(var j = 1; j < this.numOfQuarters+1; j++)
+    let quarterEndDatesString = "&dates=" + quarterEndDatesInSQLMS[0];
+
+    for(let j = 1; j < this.numOfQuarters+1; j++)
       quarterEndDatesString += "," + quarterEndDatesInSQLMS[j];
 
     historyAPIStr += quarterEndDatesString;
-    var fetchStr = historyAPIStr;
-    return fetch(fetchStr, 
+    return fetch(historyAPIStr, 
     {
       method: 'GET'
     })
@@ -164,15 +163,15 @@ class Main extends React.Component {
 
   buildThroughputChartData(data) {
     //the index of the data points (the 0th index is the type of point)
-    var indexOfDataPoints = 1;
-    var chartData = [];
+    let indexOfDataPoints = 1;
+    let chartData = [];
     for(i=0; i<this.numOfQuarters; i++){
       chartData.push([]);
       rawThroughputData.push([]);
     }
 
     if(data != null){
-      var numOfActiveQuarters = data[0][indexOfDataPoints].length;
+      let numOfActiveQuarters = data[0][indexOfDataPoints].length;
       for(i=0; i<data.length; i++){
         if(data[i][0] === "eightiethStraight" || data[i][0] === "ninetiethStraight")
           continue;
@@ -180,24 +179,20 @@ class Main extends React.Component {
         //assign quarter end date to 0th index of chart data in first loop but not anytime else (since it doesnt change for other data point assignments)
         if(i === 0){
           // organize constant into arrangable amount of quarters
-          var Q1Date, Q2Date, Q3Date, Q4Date = "";
+          let Q1Date, Q2Date, Q3Date, Q4Date = "";
           //since there is 4 quarters in a fiscal year
           for(j=0;j<4;j++){
-            if(constants.DATETOQUARTER[j].quarter == "Q1"){
-              Q1Date = constants.DATETOQUARTER[j].date
-              continue;
+            if(constants.DATETOQUARTER[j].quarter === "Q1"){
+              Q1Date = constants.DATETOQUARTER[j].date;
             }
-            else if(constants.DATETOQUARTER[j].quarter == "Q2"){
-              Q2Date = constants.DATETOQUARTER[j].date
-              continue;
+            else if(constants.DATETOQUARTER[j].quarter === "Q2"){
+              Q2Date = constants.DATETOQUARTER[j].date;
             }
-            else if(constants.DATETOQUARTER[j].quarter == "Q3"){
-              Q3Date = constants.DATETOQUARTER[j].date
-              continue;
+            else if(constants.DATETOQUARTER[j].quarter === "Q3"){
+              Q3Date = constants.DATETOQUARTER[j].date;
             }
-            else if(constants.DATETOQUARTER[j].quarter == "Q4"){
-              Q4Date = constants.DATETOQUARTER[j].date
-              continue;
+            else if(constants.DATETOQUARTER[j].quarter === "Q4"){
+              Q4Date = constants.DATETOQUARTER[j].date;
             }
           }
 
@@ -207,23 +202,23 @@ class Main extends React.Component {
           for(j=0; j<numOfActiveQuarters+1; j++){
             //build full string to use for date ex. 7/31/2017 \n FY18 Q1
             //[{v:32, f:'thirty two'}, {v:64, f:'sixty four'}]
-            var date = this.state.quarterEnddatesArray[j];
-            var dateString = "" 
+            let date = this.state.quarterEnddatesArray[j];
+            let dateString = "";
             if(date.indexOf(Q1Date)>=0)
-              dateString = date + "\n FY" + String(parseInt(date.slice(-2), 10)+1) + " Q1"  
+              dateString = date + "\n FY" + String(parseInt(date.slice(-2), 10)+1) + " Q1";
             else if(date.indexOf(Q2Date)>=0)
-              dateString = date + "\n FY" + String(parseInt(date.slice(-2), 10)+1) + " Q2"  
+              dateString = date + "\n FY" + String(parseInt(date.slice(-2), 10)+1) + " Q2";
             else if(date.indexOf(Q3Date)>=0)
-              dateString = date + "\n FY" + date.slice(-2) + " Q3"  
+              dateString = date + "\n FY" + date.slice(-2) + " Q3";
             else if(date.indexOf(Q4Date)>=0)
-              dateString = date + "\n FY" + date.slice(-2) + " Q4"  
+              dateString = date + "\n FY" + date.slice(-2) + " Q4";
 
-            var customTickObj = {v:new Date(date), f:dateString};
+            let customTickObj = {v: new Date(date), f: dateString};
             this.dates.push(customTickObj);
 
             //do not add last tick to data since it is just a tick  
-            if( j!=numOfActiveQuarters ){
-              rawThroughputData[j][0] = date            
+            if( j!==numOfActiveQuarters ){
+              rawThroughputData[j][0] = date;
               chartData[j][0] = dateString;
             }
           }
@@ -272,31 +267,30 @@ class Main extends React.Component {
 
   getLeadTimeHistory() {
     //all parameters are passed in as props from index.js
-    var projectID = this.props.data.projectId;
+    let projectID = this.props.data.projectId;
 
-    var quarterEndDatesInSQLMS = [];
+    let quarterEndDatesInSQLMS = [];
 
     for(i=0; i<(this.numOfQuarters+1); i++)
       quarterEndDatesInSQLMS.push(Math.floor(new Date(this.state.quarterEnddatesArray[i]).getTime()/1000));
 
-    var workTypeStr = this.props.data.selectedWorkTypes;
-    var historyStr = 'leadtime/quarterly'; 
+    let workTypeStr = this.props.data.selectedWorkTypes;
+    let historyStr = 'leadtime/quarterly';
 
-    var historyAPIStr = this.apiGatewayType + 'project/' + projectID  + '/' + historyStr + '?';
+    let historyAPIStr = this.apiGatewayType + 'project/' + projectID + '/' + historyStr + '?';
 
     //need comma delimited string of worktypes
     if (workTypeStr !== '') historyAPIStr += '&workTypes=' + workTypeStr;
 
     // need to build string of quarter end dates to pass into script, attach first element so that remaining are comma separated
     // if 4 quarters, need to pass in 5 dates (from "q0 end" [aka last finished quarter before q1] to q1 end as Q1, from q1 end to q2 end as Q2, from q2 to q3 as Q3, from q3 to q4 as Q4)
-    var quarterEndDatesString = "&dates=" + quarterEndDatesInSQLMS[0];
-        
-    for(var j = 1; j < this.numOfQuarters+1; j++)
+    let quarterEndDatesString = "&dates=" + quarterEndDatesInSQLMS[0];
+
+    for(let j = 1; j < this.numOfQuarters+1; j++)
       quarterEndDatesString += "," + quarterEndDatesInSQLMS[j];
     historyAPIStr += quarterEndDatesString;
 
-    var fetchStr = historyAPIStr;  
-    return fetch(fetchStr, 
+    return fetch(historyAPIStr,
     {
       method: 'GET'
     })
@@ -307,15 +301,14 @@ class Main extends React.Component {
 
   buildScatterChartData(newData){
     //if there is no leadtime data
-    if(newData.length == 0){
+    if(newData.length === 0){
       this.noLeadTimeData(true);
       return newData;
     }
     else{
-      var arr = newData.map(obj =>{ 
-          var tooltip = "<div style='white-space: nowrap; padding: 5px'><b>"+obj.name+"</b> <br /> <span>"+ String(new Date(obj.endTime*1000)).substring(4,15) + "</span><br /> <span>" + Math.round(obj.workingDays * 100) / 100 + "  days </span></div>";
-          var tempArr = [new Date(obj.endTime*1000), obj.workingDays, tooltip];
-          return tempArr;
+      let arr = newData.map(obj => {
+        let tooltip = "<div style='white-space: nowrap; padding: 5px'><b>" + obj.name + "</b> <br /> <span>" + String(new Date(obj.endTime * 1000)).substring(4, 15) + "</span><br /> <span>" + Math.round(obj.workingDays * 100) / 100 + "  days </span></div>";
+        return [new Date(obj.endTime * 1000), obj.workingDays, tooltip];
       });
       rawScatterChartData = newData;
       return arr;
@@ -324,23 +317,23 @@ class Main extends React.Component {
 
   chainFunctionCalls(){
     //page has not fully loaded
-    if(this.props.data == false){
-      this.loading(true)
+    if(this.props.data === false){
+      Main.loading(true)
     }
     else{
-      console.log(this.props.data.newData)
-      var updatesNeeded = false;
+      console.log(this.props.data.newData);
+      let updatesNeeded = false;
 
-      var newWorkTypes = this.props.data.newData.workTypes;
-      if( newWorkTypes == null || newWorkTypes == undefined )
+      let newWorkTypes = this.props.data.newData.workTypes;
+      if( newWorkTypes == null || newWorkTypes === undefined )
         newWorkTypes = []; 
-      this.props.data.newData.quarters = parseInt(this.props.data.newData.quarters, 10) 
+      this.props.data.newData.quarters = parseInt(this.props.data.newData.quarters, 10);
 
       //re-assign worktypes and number of quarters if either has changed and submit was clicked
       //first turn worktypes into comma separated URI encoded string
       for(i=0; i<newWorkTypes.length; i++)
-        newWorkTypes[i] = encodeURIComponent(newWorkTypes[i])
-      newWorkTypes = newWorkTypes.join(",")
+        newWorkTypes[i] = encodeURIComponent(newWorkTypes[i]);
+      newWorkTypes = newWorkTypes.join(",");
       
       if ( newWorkTypes !== this.props.data.selectedWorkTypes && newWorkTypes !== "" && !this.firstPageEntry ){
         this.props.data.selectedWorkTypes = newWorkTypes;
@@ -354,31 +347,32 @@ class Main extends React.Component {
 
       if( updatesNeeded || this.firstPageEntry ){
         //loading modal
-        this.loading(true)
+        Main.loading(true);
         //default chart view
         this.showChart();
-        var throughputQuarterlyData;
-        var reference = this;
+        let throughputQuarterlyData;
+        let reference = this;
         this.setQuarterEndDates()
-        .then(throughputQuarterlyData = this.getThroughputQuarterlyHistory())    
+        .then(throughputQuarterlyData = this.getThroughputQuarterlyHistory());
           throughputQuarterlyData.then(function(throughputResponse) {
             //asynchronously get leadtime history as throughput history is drawn
             reference.getLeadTimeHistory()
             .then(function(leadtimeResponse) {
               leadtimeResponse.json()
               .then( function(leadtimeResponseJson) {
-                var newChartData = reference.buildScatterChartData(leadtimeResponseJson);
+                let graph;
+                let newChartData = reference.buildScatterChartData(leadtimeResponseJson);
                 if(newChartData.length !== 0){
                   //check if chart is hidden and unhide
-                  var graph = document.getElementById("leadTimeGraphDiv");
-                  if(graph.style.display == 'none')
-                    graph.style.display = "";  
+                  graph = document.getElementById("leadTimeGraphDiv");
+                  if(graph.style.display === 'none')
+                    graph.style.display = "";
                   let promise = new Promise(function(resolve, reject) {
                     //set up ticks
                     constants.LEADTIMEOPTIONS.hAxis.ticks = reference.dates;
                     resolve(true);
                     reference.setState({leadtimeRows: newChartData});
-                    reference.loading(false);                
+                    Main.loading(false);
                   });
 
                   promise.then( function(response){
@@ -388,9 +382,9 @@ class Main extends React.Component {
                 }
                 else{
                   //hide scatter chart since there is no data for it
-                  var graph = document.getElementById("leadTimeGraphDiv");
+                  graph = document.getElementById("leadTimeGraphDiv");
                   graph.style.display = 'none';
-                  reference.loading(false);                  
+                  Main.loading(false);
                 }
               });       
             });
@@ -398,8 +392,8 @@ class Main extends React.Component {
             //finish building throughput at same time as starting leadtime history (now that some data has been gathered for leadtime history)
             throughputResponse.json()
             .then( function(throughputResponseJson) {
-              var newChartData = reference.buildThroughputChartData(throughputResponseJson);
-              
+              let newChartData = reference.buildThroughputChartData(throughputResponseJson);
+
               let promise = new Promise(function(resolve, reject) {
                 reference.throughputRows = newChartData;
                 reference.setState({throughputRows: newChartData})
@@ -413,23 +407,23 @@ class Main extends React.Component {
   }
 
   //put full screen loading modal if screen is loading
-  loading(isLoading){
-    var body = window.$("body");
+  static loading(isLoading){
+    let body = window.$("body");
     if(isLoading)
-      body.addClass("loading")
+      body.addClass("loading");
     else
       body.removeClass("loading");
   }
 
   noLeadTimeData(dataIsEmpty){
-    var body = window.$("body");
+    let body = window.$("body");
     if(dataIsEmpty){
       body.addClass("noLeadTimeData");
       this.noLeadTimeDataPresent = true;
     }
     else{
-      if(this.noLeadTimeDataPresent == true){
-        this.noLeadTimeDataPresent = false
+      if(this.noLeadTimeDataPresent === true){
+        this.noLeadTimeDataPresent = false;
         body.removeClass("noLeadTimeData");
       }   
     }
@@ -437,8 +431,8 @@ class Main extends React.Component {
 
   //depending on chartSelect value or if first page render, display correct chart in single chart view
   showChart(){
-    var selection = window.$('#chartSelect').val();
-    var newSelect;
+    let selection = window.$('#chartSelect').val();
+    let newSelect;
 
     if(selection !== null && selection !== 'default')
       newSelect = selection;
@@ -448,8 +442,8 @@ class Main extends React.Component {
     }
     else
       newSelect = 'throughput';
-    
-    var topElement, bottomElement;
+
+    let topElement, bottomElement;
     if(newSelect === "throughput"){
       topElement = document.getElementById("throughputGraphContainer");
       bottomElement = document.getElementById("leadTimeGraphContainer");
@@ -489,7 +483,7 @@ class Main extends React.Component {
         let promise = new Promise(function(resolve, reject) {
           charts[i].style.top = 0;
           resolve(true)
-        })
+        });
         promise.then(function(response){
           setTimeout(function(){ 
             var select = document.getElementById("select");          
@@ -503,7 +497,7 @@ class Main extends React.Component {
         let promise = new Promise(function(resolve, reject) {
           charts[i].style.top = "";
           resolve(true)
-        })
+        });
         promise.then(function(response){
           setTimeout(function(){ 
             var select = document.getElementById("select");          

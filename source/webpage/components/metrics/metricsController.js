@@ -3,75 +3,71 @@
  *  Handles input forms and rendering google chart
  */
 
-(function(){
+(function () {
     'use strict';
 
     angular.module('vgerMetricsController', [])
-    .controller('metricsController', metricsController);
+        .controller('metricsController', metricsController);
 
     metricsController.$inject = ['$scope', '$q', '$location', '$controller', '$rootScope', '$window',
         '$mdDialog', 'metricsFilterService', 'metricsDataService', 'dateService', 'constantsService', 'googleChartApiPromise', '$mdToast'];
+
     function metricsController($scope, $q, $location, $controller, $rootScope, $window,
                                $mdDialog, metricsFilterService, metricsDataService, dateService, constantsService, googleChartApiPromise, $mdToast) {
-        var vm = this; // view-model
-        
-        vm.teams = [];
-        vm.projects = [];
-        vm.workTypes = [];
-        vm.selectedTeam = {};
-        vm.selectedProject = {};
-        vm.selectedWorkTypes = [];
-        vm.graphError = vm.showTags = vm.submitted = vm.workTypeError = vm.editingWorkTypes = vm.editingWorkStates = vm.editingProject = vm.serverError = false;
-        vm.throughputGraph = vm.velocityGraph = {};
-        vm.leadTimeTrends, vm.leadTimePercentile, vm.leadTimeMode;
-        vm.throughputGraphBuilt = vm.velocityGraphBuilt = vm.leadTimeGraphBuilt = vm.predictabilityGraphBuilt = false;
-        vm.viewMode = "issue";
+        let view_model = this; // view-model
 
-        vm.filter = filter;
-        vm.hideTPSeries = hideTPSeries;
-        vm.hideLTSeries = hideLTSeries;
-        vm.changePercentileCurve = changePercentileCurve;
-        vm.toggleGitTags = toggleGitTags;
-        vm.leadTimePercentileChange = leadTimePercentileChange;
-        vm.changeVelocityCurve = changeVelocityCurve;
-        vm.showLeadTimeTrends = showLeadTimeTrends;
-        vm.leadTimeModeChange = leadTimeModeChange;
-        vm.projectSettingsModal = projectSettingsModal;
-        vm.openMenu = openMenu;
-        vm.getBoardID = getBoardID;
-        vm.addWebpageConstants = addWebpageConstants;
-        vm.updateWebpageConstants = updateWebpageConstants;
-        vm.buildNewURL = buildNewURL;
-        vm.changeSelectedWorkTypes = changeSelectedWorkTypes;
-        vm.workStatesSettingsModal = workStatesSettingsModal;
-        vm.workTypesSettingsModal = workTypesSettingsModal;
-        vm.viewModeChange= viewModeChange;
-        vm.downloadThroughput = downloadThroughput;
-        vm.projectETL = projectETL;
-        vm.issueTypeETL = issueTypeETL;
-        vm.hasGitRepo = false;
-        vm.hasGitTag = false;
-        vm.hamburgerMenuOpened = false;
-        vm.errorStatus;
-        vm.searchDateSince;
-        vm.searchDateUntil;
-        vm.searchDays;
-        vm.fileName = "";
+        view_model.teams = [];
+        view_model.projects = [];
+        view_model.workTypes = [];
+        view_model.selectedTeam = {};
+        view_model.selectedProject = {};
+        view_model.selectedWorkTypes = [];
+        view_model.graphError = view_model.showTags = view_model.submitted = view_model.workTypeError = view_model.editingWorkTypes = view_model.editingWorkStates = view_model.editingProject = view_model.serverError = false;
+        view_model.throughputGraph = view_model.velocityGraph = {};
+        view_model.throughputGraphBuilt = view_model.velocityGraphBuilt = view_model.leadTimeGraphBuilt = view_model.predictabilityGraphBuilt = false;
+        view_model.viewMode = "issue";
 
-        var dateSince, dateUntil, days;
-        var isPointsStraight = false;
-        var curvedDataPoints = [], straightDataPoints = [];
-        var throughputData = [], velocityData = [], predictabilityData = [], leadTimeData = {}, gitData = {};
-        var throughputTickets = [];
-        var absoluteBacklogHistory = [], relativeBacklogHistory = [];
-        var backlogSeries = [];
-        var leadTimeStages = [];
-        var throughputLabels = [], velocityLabels = [], predictabilityLabels = [], leadTimeLabels = [];
+        view_model.filter = filter;
+        view_model.hideTPSeries = hideTPSeries;
+        view_model.hideLTSeries = hideLTSeries;
+        view_model.changePercentileCurve = changePercentileCurve;
+        view_model.toggleGitTags = toggleGitTags;
+        view_model.leadTimePercentileChange = leadTimePercentileChange;
+        view_model.changeVelocityCurve = changeVelocityCurve;
+        view_model.showLeadTimeTrends = showLeadTimeTrends;
+        view_model.leadTimeModeChange = leadTimeModeChange;
+        view_model.projectSettingsModal = projectSettingsModal;
+        view_model.openMenu = openMenu;
+        view_model.getBoardID = getBoardID;
+        view_model.addWebpageConstants = addWebpageConstants;
+        view_model.updateWebpageConstants = updateWebpageConstants;
+        view_model.buildNewURL = buildNewURL;
+        view_model.changeSelectedWorkTypes = changeSelectedWorkTypes;
+        view_model.workStatesSettingsModal = workStatesSettingsModal;
+        view_model.workTypesSettingsModal = workTypesSettingsModal;
+        view_model.viewModeChange = viewModeChange;
+        view_model.downloadThroughput = downloadThroughput;
+        view_model.projectETL = projectETL;
+        view_model.issueTypeETL = issueTypeETL;
+        view_model.hasGitRepo = false;
+        view_model.hasGitTag = false;
+        view_model.hamburgerMenuOpened = false;
+        view_model.fileName = "";
+
+        let dateSince, dateUntil, days;
+        let isPointsStraight = false;
+        let curvedDataPoints = [], straightDataPoints = [];
+        let throughputData = [], velocityData = [], predictabilityData = [], leadTimeData = {}, gitData = {};
+        let throughputTickets = [];
+        let absoluteBacklogHistory = [], relativeBacklogHistory = [];
+        let backlogSeries = [];
+        let leadTimeStages = [];
+        let throughputLabels = [], velocityLabels = [], predictabilityLabels = [], leadTimeLabels = [];
 
         // Open project settings when first redirected from creating a new team project
-        var newTeamProject = $location.search().newTeamProject;
+        let newTeamProject = $location.search().newTeamProject;
         if (newTeamProject) {
-            vm.projectSettingsModal();
+            view_model.projectSettingsModal();
         }
 
         // Save scope between configuration and metrics page
@@ -83,67 +79,64 @@
 
         function getSessionScope() {
             // Check bookmarked query params
-            var queryParams = $location.search();
-            vm.selectedTeam.id = queryParams['teamId'];
-            vm.selectedProject.id = queryParams['projectId'];
-            vm.selectedTeam.name = queryParams['teamName'];
-            vm.selectedProject.name = queryParams['projectName'];
+            let queryParams = $location.search();
+            view_model.selectedTeam.id = queryParams['teamId'];
+            view_model.selectedProject.id = queryParams['projectId'];
+            view_model.selectedTeam.name = queryParams['teamName'];
+            view_model.selectedProject.name = queryParams['projectName'];
 
-            if (vm.selectedProject.id && !$window.sessionStorage.selectedProjectId) {
-                $rootScope.selectedTeamId = vm.selectedTeam.id;
-                $rootScope.selectedTeamName = vm.selectedTeam.name;
-                $window.sessionStorage.selectedTeamId = vm.selectedTeam.id;
-                $window.sessionStorage.selectedTeamName = vm.selectedTeam.name;
-                $rootScope.selectedProjectId = vm.selectedProject.id;
-                $rootScope.selectedProjectName = vm.selectedProject.name;
-                $window.sessionStorage.selectedProjectId = vm.selectedProject.id;
-                $window.sessionStorage.selectedProjectName = vm.selectedProject.name;
-            } else if (!vm.selectedProject.id && $window.sessionStorage.selectedProjectId) {
+            if (view_model.selectedProject.id && !$window.sessionStorage.selectedProjectId) {
+                $rootScope.selectedTeamId = view_model.selectedTeam.id;
+                $rootScope.selectedTeamName = view_model.selectedTeam.name;
+                $window.sessionStorage.selectedTeamId = view_model.selectedTeam.id;
+                $window.sessionStorage.selectedTeamName = view_model.selectedTeam.name;
+                $rootScope.selectedProjectId = view_model.selectedProject.id;
+                $rootScope.selectedProjectName = view_model.selectedProject.name;
+                $window.sessionStorage.selectedProjectId = view_model.selectedProject.id;
+                $window.sessionStorage.selectedProjectName = view_model.selectedProject.name;
+            } else if (!view_model.selectedProject.id && $window.sessionStorage.selectedProjectId) {
                 // console.log('Searched');
-                vm.selectedTeam.id = $window.sessionStorage.selectedTeamId;
-                vm.selectedProject.id = $window.sessionStorage.selectedProjectId;
-                vm.selectedTeam.name = $window.sessionStorage.selectedTeamName;
-                vm.selectedProject.name = $window.sessionStorage.selectedProjectName;
+                view_model.selectedTeam.id = $window.sessionStorage.selectedTeamId;
+                view_model.selectedProject.id = $window.sessionStorage.selectedProjectId;
+                view_model.selectedTeam.name = $window.sessionStorage.selectedTeamName;
+                view_model.selectedProject.name = $window.sessionStorage.selectedProjectName;
             }
         }
 
         // Get list of work types for the project
         function getWorkTypes(callback) {
-            var promiseWorkType = metricsFilterService.getWorkTypes(vm.selectedProject.id);
-            promiseWorkType.then(function(response) {
-                vm.workTypes = [];                                           // Initialize with empty list on each new call
-                vm.selectedWorkTypesModel = [];
-                vm.selectedWorkTypes = [];
-                vm.workTypeError = false;
+            let promiseWorkType = metricsFilterService.getWorkTypes(view_model.selectedProject.id);
+            promiseWorkType.then(function (response) {
+                view_model.workTypes = [];                                           // Initialize with empty list on each new call
+                view_model.selectedWorkTypesModel = [];
+                view_model.selectedWorkTypes = [];
+                view_model.workTypeError = false;
                 // Iterating through each dictionary key and saving the values into workTypes & selectedWorkTypes array
                 // All work types are selected initially; append all to selectedWorkTypes
-                var count = 1;
-                var worktype = {};
+                let count = 1;
+                let worktype = {};
 
                 Object.keys(response.data).sort(function (a, b) {
                     return a.toLowerCase().localeCompare(b.toLowerCase());
-                }).map(function(key) {
+                }).map(function (key) {
                     // template for angularjs-dropdown-multiselect
                     worktype = {
                         'id': count,
-                        'label' : key
-                    }
-                    vm.workTypes.push(worktype);
-                    vm.selectedWorkTypesModel.push(worktype);
-                    vm.selectedWorkTypes.push(key);
-                    count ++;
+                        'label': key
+                    };
+                    view_model.workTypes.push(worktype);
+                    view_model.selectedWorkTypesModel.push(worktype);
+                    view_model.selectedWorkTypes.push(key);
+                    count++;
                 });
 
-                if (typeof(callback) === "function" && callback) {
+                if (typeof (callback) === "function" && callback) {
                     callback();
                 }
-
-            }).catch(function(errorResponse) {
-            // console.log(errorResponse);
             })
         }
 
-        vm.dropdownSettings = {
+        view_model.dropdownSettings = {
             showCheckAll: true,
             showUncheckAll: true
         };
@@ -155,74 +148,69 @@
                     getSelectedWorkTypes();
                 }
             },
-        }
+        };
 
         function getSelectedWorkTypes() {
-            vm.selectedWorkTypes = []; // Clear past selection
-            for (var index in vm.selectedWorkTypesModel) {
-                vm.selectedWorkTypes.push(vm.selectedWorkTypesModel[index].label);
+            view_model.selectedWorkTypes = []; // Clear past selection
+            for (var index in view_model.selectedWorkTypesModel) {
+                view_model.selectedWorkTypes.push(view_model.selectedWorkTypesModel[index].label);
             }
-            if (vm.selectedWorkTypes.length <= 0) {
-                vm.workTypeError = true;
-            } else {
-                vm.workTypeError = false;
-            }
+            view_model.workTypeError = view_model.selectedWorkTypes.length <= 0;
         }
 
         // Invoked by Submit button
         function filter() {
-            dateSince =  dateService.getDateSince();
+            dateSince = dateService.getDateSince();
             dateUntil = dateService.getDateUntil();
             days = dateService.getDays();
-            
+
             if (!dateUntil) {
                 dateUntil = new Date();
                 dateService.setDateUntil(dateUntil);
             }
             if (!dateSince) {
                 dateSince = new Date();
-                dateSince.setDate(dateUntil.getDate()-90);
+                dateSince.setDate(dateUntil.getDate() - 90);
                 dateService.setDateSince(dateSince);
             }
-            
-            vm.searchDateSince = dateSince;
-            vm.searchDateUntil = dateUntil;
-            vm.searchDays = dateService.getDays();
+
+            view_model.searchDateSince = dateSince;
+            view_model.searchDateUntil = dateUntil;
+            view_model.searchDays = dateService.getDays();
 
             $location.search({
-                teamId : vm.selectedTeam.id,
-                projectId : vm.selectedProject.id,
-                teamName : vm.selectedTeam.name,
-                projectName: vm.selectedProject.name,
-                to: formatDate(vm.searchDateUntil),
-                from: formatDate(vm.searchDateSince),
-                workTypes: (vm.selectedWorkTypes.join())
+                teamId: view_model.selectedTeam.id,
+                projectId: view_model.selectedProject.id,
+                teamName: view_model.selectedTeam.name,
+                projectName: view_model.selectedProject.name,
+                to: formatDate(view_model.searchDateUntil),
+                from: formatDate(view_model.searchDateSince),
+                workTypes: (view_model.selectedWorkTypes.join())
             });
 
-            (vm.viewMode == 'issue') ? updateMetrics() : updatePRMetrics();
+            (view_model.viewMode === 'issue') ? updateMetrics() : updatePRMetrics();
         }
 
         function errorHandler(errorResponse, caller) {
             caller = caller || 'default';
-            if (caller == 'gitRepo' || caller == 'gitTag') {
+            if (caller === 'gitRepo' || caller === 'gitTag') {
                 // TODO: handle with alert message, show tooltip on disabled button
                 // Git repository or git tag is optional
-                vm.hasGitRepo = false;
-                vm.hasGitTag = false;
+                view_model.hasGitRepo = false;
+                view_model.hasGitTag = false;
                 return;
-            } else if (caller != 'default') {
+            } else if (caller !== 'default') {
                 console.log(errorResponse);
-                vm.graphError = true;
+                view_model.graphError = true;
             } else {
                 console.log(errorResponse);
-                vm.serverError = true;
+                view_model.serverError = true;
             }
             return $q.reject(errorResponse);
         }
 
-
         function warningToast(message) {
-            var el = angular.element(document.querySelector('#metricsToastController'));
+            let el = angular.element(document.querySelector('#metricsToastController'));
             $mdToast.show(
                 $mdToast.simple()
                     .textContent(message)
@@ -234,7 +222,7 @@
 
         // TODO use dateController
         function formatDate(date) {
-            var d = new Date(date),
+            let d = new Date(date),
                 month = '' + (d.getMonth() + 1),
                 day = '' + d.getDate(),
                 year = d.getFullYear();
@@ -244,26 +232,25 @@
         }
 
         function buildThroughputGraph() {
-            // console.log('buildThroughputGraph');
-            var deferred = $.Deferred();
-            var dateLabels = [];
-            for (var date in throughputLabels){
-                var newDate = new Date(throughputLabels[date]);
+            let deferred = $.Deferred();
+            let dateLabels = [];
+            for (let date in throughputLabels) {
+                let newDate = new Date(throughputLabels[date]);
                 newDate.setDate(newDate.getDate());
                 dateLabels.push(newDate);
             }
-            var y_axis_label = (vm.viewMode == "issue") ? 'Issues Completed' : 'PRs Completed';
-            var chart = {
+            let y_axis_label = (view_model.viewMode === "issue") ? 'Issues Completed' : 'PRs Completed';
+            let chart = {
                 type: 'LineChart',
                 options: {
-                    chartArea:{
+                    chartArea: {
                         width: '90%',
                         height: '80%',
                         left: '7%',
                         top: '7%'
                     },
                     height: '100%',
-                    legend: { position: 'top' },
+                    legend: {position: 'top'},
                     vAxis: {
                         title: y_axis_label,
                         titleTextStyle: {
@@ -282,34 +269,33 @@
                         },
                         format: 'M/d/yy',
                         ticks: dateLabels,
-                        gridlines:{
-                        }
+                        gridlines: {}
                     },
                     curveType: 'function',
-                    colors: ['#000', '#CCCCCC', '#006400', '#808000' , '#cc8400'],
-                    defaultColors: ['#000', '#CCCCCC', '#006400', '#808000' , '#cc8400'],
+                    colors: ['#000', '#CCCCCC', '#006400', '#808000', '#cc8400'],
+                    defaultColors: ['#000', '#CCCCCC', '#006400', '#808000', '#cc8400'],
                     series: {
-                        0: { lineWidth: 3 , pointShape: 'circle', pointSize: 7 },
-                        1: { lineWidth: 0 , pointSize: 0 },
-                        2: { lineWidth: 1 , pointShape: 'triangle', pointSize: 10 },
-                        3: { lineWidth: 1 , pointShape: 'square', pointSize: 10 },
-                        4: { lineWidth: 1 , pointShape: 'diamond', pointSize: 10 },
+                        0: {lineWidth: 3, pointShape: 'circle', pointSize: 7},
+                        1: {lineWidth: 0, pointSize: 0},
+                        2: {lineWidth: 1, pointShape: 'triangle', pointSize: 10},
+                        3: {lineWidth: 1, pointShape: 'square', pointSize: 10},
+                        4: {lineWidth: 1, pointShape: 'diamond', pointSize: 10},
                     },
                     annotations: {
                         style: 'line'
                     },
                     focusTarget: 'category'
                 }
-            }
+            };
 
-            var data = new google.visualization.DataTable();
+            let data = new google.visualization.DataTable();
             data.addColumn('datetime', 'Week');
-            if (vm.showTags) {
+            if (view_model.showTags) {
                 data.addColumn({type: 'string', role: 'annotation'});
                 data.addColumn({type: 'string', role: 'tooltip'});
             }
-            var sorted = [];
-            for(var key in throughputData) {
+            let sorted = [];
+            for (var key in throughputData) {
                 sorted[sorted.length] = key;
             }
             sorted.sort().reverse();
@@ -322,12 +308,12 @@
             for (var week in throughputLabels) {
                 var row = [];
                 row.push(dateLabels[week]);
-                if (vm.showTags){
+                if (view_model.showTags) {
                     row.push(null);
                     row.push(null);
                 }
                 for (var series in sorted) {
-                    key=sorted[series];
+                    key = sorted[series];
                     row.push(throughputData[key][week]);
                     if (sorted[series] === 'Actual') {
                         row.push(null);
@@ -335,7 +321,7 @@
                 }
                 data.addRow(row);
             }
-            if (vm.showTags) {
+            if (view_model.showTags) {
                 for (var repo in gitData) {
                     for (var key in  gitData[repo]) {
                         var row = [];
@@ -363,32 +349,30 @@
                 };
             }
             chart.data = data;
-            vm.throughputGraph = chart;
-            vm.throughputGraphBuilt = true;
-            // console.log('buildThroughputGraph done');
+            view_model.throughputGraph = chart;
+            view_model.throughputGraphBuilt = true;
             return deferred.promise();
         }
 
-        function buildVelocityGraph(){
-            // console.log('buildVelocityGraph');
-            var deferred = $.Deferred();
-            var dateLabels = [];
-             for (var date in velocityLabels) {
-                var newDate = new Date(velocityLabels[date]);
+        function buildVelocityGraph() {
+            let deferred = $.Deferred();
+            let dateLabels = [];
+            for (let date in velocityLabels) {
+                let newDate = new Date(velocityLabels[date]);
                 newDate.setDate(newDate.getDate());
                 dateLabels.push(newDate);
             }
-            var chart = {
+            let chart = {
                 type: 'AreaChart',
                 options: {
-                    chartArea:{
+                    chartArea: {
                         width: '90%',
                         height: '80%',
                         left: '7%',
                         top: '7%'
                     },
                     height: '100%',
-                    legend: { position: 'top' },
+                    legend: {position: 'top'},
                     vAxis: {
                         title: 'Number of Issues',
                         titleTextStyle: {
@@ -405,25 +389,24 @@
                         },
                         format: 'M/d/yy',
                         ticks: dateLabels,
-                        gridlines:{
-                        }
+                        gridlines: {}
                     },
                     curveType: 'function',
                     pointSize: 5,
                     series: {
-                        0: { lineWidth: 1, pointShape: 'circle'},
-                        1: { lineWidth: 1, pointShape: 'triangle' },
+                        0: {lineWidth: 1, pointShape: 'circle'},
+                        1: {lineWidth: 1, pointShape: 'triangle'},
                     },
                     annotations: {
                         style: 'line'
                     },
                     focusTarget: 'category'
                 }
-            }
+            };
 
-            var data = new google.visualization.DataTable();
+            let data = new google.visualization.DataTable();
             data.addColumn('datetime', 'Week');
-            if (vm.showTags) {
+            if (view_model.showTags) {
                 data.addColumn({type: 'string', role: 'annotation'});
                 data.addColumn({type: 'string', role: 'tooltip'});
             }
@@ -433,7 +416,7 @@
             for (var week in velocityLabels) {
                 var row = [];
                 row.push(dateLabels[week]);
-                if (vm.showTags) {
+                if (view_model.showTags) {
                     row.push(null);
                     row.push(null);
                 }
@@ -442,7 +425,7 @@
 
                 data.addRow(row);
             }
-            if (vm.showTags) {
+            if (view_model.showTags) {
                 for (var repo in gitData) {
                     for (var key in  gitData[repo]) {
                         var row = [];
@@ -460,32 +443,30 @@
                 chart.options.hAxis.gridlines.color = 'transparent';
             }
             chart.data = data;
-            vm.velocityGraph = chart;
-            vm.velocityGraphBuilt = true;
-            // console.log ('buildVelocityGraph done');
+            view_model.velocityGraph = chart;
+            view_model.velocityGraphBuilt = true;
             return deferred.promise();
         }
 
         function buildPRVelocityGraph() {
-            // console.log('buildVelocityGraph');
-            var deferred = $.Deferred();
-            var dateLabels = [];
-             for (var date in velocityLabels) {
-                var newDate = new Date(velocityLabels[date]);
+            let deferred = $.Deferred();
+            let dateLabels = [];
+            for (let date in velocityLabels) {
+                let newDate = new Date(velocityLabels[date]);
                 newDate.setDate(newDate.getDate());
                 dateLabels.push(newDate);
             }
-            var chart = {
+            let chart = {
                 type: 'AreaChart',
                 options: {
-                    chartArea:{
+                    chartArea: {
                         width: '90%',
                         height: '80%',
                         left: '7%',
                         top: '7%'
                     },
                     height: '100%',
-                    legend: { position: 'top' },
+                    legend: {position: 'top'},
                     vAxis: {
                         title: 'Total Volume (Lines)',
                         titleTextStyle: {
@@ -502,8 +483,7 @@
                         },
                         format: 'M/d/yy',
                         ticks: dateLabels,
-                        gridlines:{
-                        }
+                        gridlines: {}
                     },
                     pointSize: 5,
                     series: {
@@ -516,11 +496,11 @@
                     isStacked: true,
                     focusTarget: 'category'
                 }
-            }
+            };
 
-            var data = new google.visualization.DataTable();
+            let data = new google.visualization.DataTable();
             data.addColumn('datetime', 'Week');
-            if (vm.showTags) {
+            if (view_model.showTags) {
                 data.addColumn({type: 'string', role: 'annotation'});
                 data.addColumn({type: 'string', role: 'tooltip'});
             }
@@ -531,7 +511,7 @@
             for (var week in velocityLabels) {
                 var row = [];
                 row.push(dateLabels[week]);
-                if (vm.showTags) {
+                if (view_model.showTags) {
                     row.push(null);
                     row.push(null);
                 }
@@ -540,7 +520,7 @@
                 row.push(velocityData[0][week]);
                 data.addRow(row);
             }
-            if (vm.showTags) {
+            if (view_model.showTags) {
                 for (var repo in gitData) {
                     for (var key in  gitData[repo]) {
                         var row = [];
@@ -558,32 +538,30 @@
                 chart.options.hAxis.gridlines.color = 'transparent';
             }
             chart.data = data;
-            vm.velocityGraph = chart;
-            vm.velocityGraphBuilt = true;
-            // console.log ('buildVelocityGraph done');
+            view_model.velocityGraph = chart;
+            view_model.velocityGraphBuilt = true;
             return deferred.promise();
         }
 
         function buildPredictabilityGraph() {
-            // console.log('buildPredictabilityGraph');
-            var deferred = $.Deferred();
-            var dateLabels = [];
-            for (var date in predictabilityLabels){
-                var newDate = new Date(predictabilityLabels[date]);
+            let deferred = $.Deferred();
+            let dateLabels = [];
+            for (let date in predictabilityLabels) {
+                let newDate = new Date(predictabilityLabels[date]);
                 newDate.setDate(newDate.getDate());
                 dateLabels.push(newDate);
             }
-            var chart = {
+            let chart = {
                 type: 'LineChart',
                 options: {
-                    chartArea:{
+                    chartArea: {
                         width: '90%',
                         height: '80%',
                         left: '7%',
                         top: '7%'
                     },
                     height: '100%',
-                    legend: { position: 'none' },
+                    legend: {position: 'none'},
                     vAxis: {
                         title: 'Predictability (lower variation is better)',
                         titleTextStyle: {
@@ -602,24 +580,23 @@
                         },
                         format: 'M/d/yy',
                         ticks: dateLabels,
-                        gridlines:{
-                        }
+                        gridlines: {}
                     },
                     curveType: 'function',
                     pointSize: 5,
                     colors: ['black'],
                     series: {
-                        0: { lineWidth: 1 }
+                        0: {lineWidth: 1}
                     },
                     annotations: {
                         style: 'line'
                     },
                     focusTarget: 'category'
                 }
-            }
-            var data = new google.visualization.DataTable();
+            };
+            let data = new google.visualization.DataTable();
             data.addColumn('datetime', 'Week');
-            if (vm.showTags){
+            if (view_model.showTags) {
                 data.addColumn({type: 'string', role: 'annotation'});
                 data.addColumn({type: 'string', role: 'tooltip'});
             }
@@ -627,14 +604,14 @@
             for (var week in predictabilityLabels) {
                 var row = [];
                 row.push(dateLabels[week]);
-                if (vm.showTags) {
+                if (view_model.showTags) {
                     row.push(null);
                     row.push(null);
                 }
                 row.push(predictabilityData[week]);
                 data.addRow(row);
             }
-            if (vm.showTags) {
+            if (view_model.showTags) {
                 for (var repo in gitData) {
                     for (var key in gitData[repo]) {
                         var row = [];
@@ -651,31 +628,29 @@
                 chart.options.hAxis.gridlines.color = 'transparent';
             }
             chart.data = data;
-            vm.predictabilityGraph = chart;
-            vm.predictabilityGraphBuilt = true;
-            // console.log ('buildPredictabilityGraph done');
+            view_model.predictabilityGraph = chart;
+            view_model.predictabilityGraphBuilt = true;
             return deferred.promise();
         }
 
         function buildOverallLeadTimeGraph() {
-            // console.log('buildOverallLeadTimeGraph');
-            var deferred = $.Deferred();
-            var dateLabels = [];
-            for (var date in leadTimeLabels) {
-                var newDate = new Date(leadTimeLabels[date]);
+            let deferred = $.Deferred();
+            let dateLabels = [];
+            for (let date in leadTimeLabels) {
+                let newDate = new Date(leadTimeLabels[date]);
                 newDate.setDate(newDate.getDate());
                 dateLabels.push(newDate);
             }
-            var chart = {
+            let chart = {
                 type: 'LineChart',
                 options: {
-                    chartArea:{
+                    chartArea: {
                         width: '90%',
                         height: '80%',
                         left: '7%',
                         top: '7%'
                     },
-                    legend: { position: 'top' },
+                    legend: {position: 'top'},
                     vAxis: {
                         title: 'Working Days',
                         titleTextStyle: {
@@ -694,32 +669,31 @@
                         },
                         format: 'M/d/yy',
                         ticks: dateLabels,
-                        gridlines:{
-                        }
+                        gridlines: {}
                     },
                     annotations: {
                         style: 'line'
                     },
-                    colors: ['#CC0000','#0000FF', '#DD9900'],
-                    defaultColors:['#CC0000','#0000FF', '#DD9900'],
+                    colors: ['#CC0000', '#0000FF', '#DD9900'],
+                    defaultColors: ['#CC0000', '#0000FF', '#DD9900'],
                     curveType: 'function',
                     pointSize: 5,
                     series: {
-                        0: { lineWidth: 1 , pointShape: 'triangle', pointSize: 10 },
-                        1: { lineWidth: 1 , pointShape: 'star', pointSize: 10 },
-                        2: { lineWidth: 1 , pointShape: 'diamond', pointSize: 10 }
+                        0: {lineWidth: 1, pointShape: 'triangle', pointSize: 10},
+                        1: {lineWidth: 1, pointShape: 'star', pointSize: 10},
+                        2: {lineWidth: 1, pointShape: 'diamond', pointSize: 10}
                     },
                     focusTarget: 'category'
                 }
-            }
-            var data = new google.visualization.DataTable();
+            };
+            let data = new google.visualization.DataTable();
             data.addColumn('datetime', 'Week');
-            if (vm.showTags) {
+            if (view_model.showTags) {
                 data.addColumn({type: 'string', role: 'annotation'});
                 data.addColumn({type: 'string', role: 'tooltip'});
             }
-            var sorted = [];
-            for(var key in leadTimeData) {
+            let sorted = [];
+            for (var key in leadTimeData) {
                 sorted[sorted.length] = key;
             }
             sorted.sort().reverse();
@@ -730,18 +704,18 @@
             for (var week in leadTimeLabels) {
                 var row = [];
                 row.push(dateLabels[week]);
-                if (vm.showTags){
+                if (view_model.showTags) {
                     row.push(null);
                     row.push(null);
                 }
                 for (var series in sorted) {
-                    key=sorted[series];
+                    key = sorted[series];
                     row.push(leadTimeData[key][0][week]);
                 }
                 data.addRow(row);
             }
 
-            if (vm.showTags) {
+            if (view_model.showTags) {
                 for (var repo in gitData) {
                     for (var key in  gitData[repo]) {
                         var row = [];
@@ -767,27 +741,26 @@
                 };
             }
             chart.data = data;
-            vm.leadTimeGraph = chart;
-            vm.leadTimeGraphBuilt = true;
-            // console.log ('buildOverallLeadTimeGraph done');
+            view_model.leadTimeGraph = chart;
+            view_model.leadTimeGraphBuilt = true;
             return deferred.promise();
         }
 
         function buildDetailedLeadTimeGraph() {
-            var dateLabels = [];
-            for (var date in leadTimeLabels) {
-                var newDate = new Date(leadTimeLabels[date]);
+            let dateLabels = [];
+            for (let date in leadTimeLabels) {
+                let newDate = new Date(leadTimeLabels[date]);
                 newDate.setDate(newDate.getDate());
                 dateLabels.push(newDate);
             }
-            var chart = {
+            let chart = {
                 type: 'ColumnChart',
                 options: {
-                    chartArea:{
+                    chartArea: {
                         width: '90%',
                         height: '80%'
                     },
-                    legend: { position: 'top' },
+                    legend: {position: 'top'},
                     vAxis: {
                         title: 'Lifespan of issue (Working Days)',
                         titleTextStyle: {
@@ -798,66 +771,66 @@
                         },
                         gridlines: {},
                         minValue: 0
+                    },
+                    annotations: {
+                        style: 'line'
+                    },
+                    hAxis: {
+                        title: 'Weeks',
+                        titleTextStyle: {
+                            italic: false
                         },
-                        annotations: {
-                            style: 'line'
-                        },
-                        hAxis: {
-                            title: 'Weeks',
-                            titleTextStyle: {
-                              italic: false
-                          },
-                          format: 'M/d/yy',
-                          ticks: dateLabels,
-                          gridlines: {}
-                        },
+                        format: 'M/d/yy',
+                        ticks: dateLabels,
+                        gridlines: {}
+                    },
                     colors: ['black', '#e2431e', '#f1ca3a', '#6f9654', '#1c91c0',
-                     '#4374e0', '#5c3292', '#572a1a', '#999999', '#1a1a1a'],
+                        '#4374e0', '#5c3292', '#572a1a', '#999999', '#1a1a1a'],
                     defaultColors: ['black', '#e2431e', '#f1ca3a', '#6f9654', '#1c91c0',
-                     '#4374e0', '#5c3292', '#572a1a', '#999999', '#1a1a1a'],
+                        '#4374e0', '#5c3292', '#572a1a', '#999999', '#1a1a1a'],
                     curveType: 'function',
                     seriesType: 'bars',
                 }
-            }
-            var data = new google.visualization.DataTable();
+            };
+            let data = new google.visualization.DataTable();
             data.addColumn('datetime', 'Week');
-            if (vm.showTags){
+            if (view_model.showTags) {
                 data.addColumn({type: 'string', role: 'annotation'});
                 data.addColumn({type: 'string', role: 'tooltip'});
             }
-            var newSeries = {};
-            var colourIndex = 0;
+            let newSeries = {};
+            let colourIndex = 0;
             for (var col in leadTimeStages) {
                 console.log('var col in leadTimeStages');
                 console.log(col);
                 if (leadTimeStages[col] === 'Overall') {
                     // replace overall title with percentile title
                     newSeries[Object.keys(newSeries).length] = {type: 'line', pointSize: 4};
-                    data.addColumn('number', vm.leadTimePercentile + ' Overall');
+                    data.addColumn('number', view_model.leadTimePercentile + ' Overall');
                 } else {
-                    if (vm.leadTimeTrends){
+                    if (view_model.leadTimeTrends) {
                         newSeries[Object.keys(newSeries).length] = {type: 'line', pointSize: 4};
                     } else {
                         newSeries[Object.keys(newSeries).length] = {type: 'bar'};
                     }
                     data.addColumn('number', leadTimeStages[col]);
                 }
-                colourIndex+=1;
+                colourIndex += 1;
             }
             chart.options.series = newSeries;
             for (var week in leadTimeLabels) {
                 var row = [];
                 row.push(dateLabels[week]);
-                if (vm.showTags) {
+                if (view_model.showTags) {
                     row.push(null);
                     row.push(null);
                 }
                 for (var series in leadTimeStages) {
-                    row.push(leadTimeData[vm.leadTimePercentile][series][week]);
+                    row.push(leadTimeData[view_model.leadTimePercentile][series][week]);
                 }
                 data.addRow(row);
             }
-            if (vm.showTags) {
+            if (view_model.showTags) {
                 for (var repo in gitData) {
                     for (var key in gitData[repo]) {
                         var row = [];
@@ -865,42 +838,42 @@
                             row.push(new Date(key));
                             row.push('');
                             row.push(gitData[repo][key]);
-                        for (var series in leadTimeStages) {
-                            row.push(null);
-                        }
+                            for (var series in leadTimeStages) {
+                                row.push(null);
+                            }
                             data.addRow(row);
                         }
                     }
                 }
                 chart.options.vAxis.gridlines.color = 'transparent';
                 chart.options.hAxis.gridlines.color = 'transparent';
-                chart.view = { columns: Array.from(Array(Object.keys(newSeries).length + 3).keys()) };
+                chart.view = {columns: Array.from(Array(Object.keys(newSeries).length + 3).keys())};
             } else {
-                chart.view = { columns: Array.from(Array(Object.keys(newSeries).length + 1).keys()) };
+                chart.view = {columns: Array.from(Array(Object.keys(newSeries).length + 1).keys())};
             }
             chart.data = data;
-            vm.leadTimeGraph = chart;
-            vm.leadTimeGraphBuilt = true;
+            view_model.leadTimeGraph = chart;
+            view_model.leadTimeGraphBuilt = true;
         }
 
         function buildPRLeadTimeGraph() {
-            var dateLabels = [];
-            var deferred = $.Deferred();
+            let dateLabels = [];
+            let deferred = $.Deferred();
             for (var date in leadTimeLabels) {
                 var newDate = new Date(leadTimeLabels[date]);
                 newDate.setDate(newDate.getDate());
                 dateLabels.push(newDate);
             }
-            var chart = {
+            let chart = {
                 type: 'LineChart',
                 options: {
-                    chartArea:{
+                    chartArea: {
                         width: '90%',
                         height: '80%',
                         left: '7%',
                         top: '7%'
                     },
-                    legend: { position: 'top' },
+                    legend: {position: 'top'},
                     vAxis: {
                         title: 'Working Days',
                         titleTextStyle: {
@@ -919,32 +892,31 @@
                         },
                         format: 'M/d/yy',
                         ticks: dateLabels,
-                        gridlines:{
-                        }
+                        gridlines: {}
                     },
                     annotations: {
                         style: 'line'
                     },
-                    colors: ['#CC0000','#0000FF', '#DD9900'],
-                    defaultColors:['#CC0000','#0000FF', '#DD9900'],
+                    colors: ['#CC0000', '#0000FF', '#DD9900'],
+                    defaultColors: ['#CC0000', '#0000FF', '#DD9900'],
                     curveType: 'function',
                     pointSize: 5,
                     series: {
-                        0: { lineWidth: 1 , pointShape: 'triangle', pointSize: 10 },
-                        1: { lineWidth: 1 , pointShape: 'star', pointSize: 10 },
-                        2: { lineWidth: 1 , pointShape: 'diamond', pointSize: 10 }
+                        0: {lineWidth: 1, pointShape: 'triangle', pointSize: 10},
+                        1: {lineWidth: 1, pointShape: 'star', pointSize: 10},
+                        2: {lineWidth: 1, pointShape: 'diamond', pointSize: 10}
                     },
                     focusTarget: 'category'
                 }
             };
-            var data = new google.visualization.DataTable();
+            let data = new google.visualization.DataTable();
             data.addColumn('datetime', 'Week');
-            if (vm.showTags) {
+            if (view_model.showTags) {
                 data.addColumn({type: 'string', role: 'annotation'});
                 data.addColumn({type: 'string', role: 'tooltip'});
             }
-            var sorted = [];
-            for(var key in leadTimeData) {
+            let sorted = [];
+            for (var key in leadTimeData) {
                 sorted[sorted.length] = key;
             }
             sorted.sort().reverse();
@@ -954,17 +926,17 @@
             for (var week in leadTimeLabels) {
                 var row = [];
                 row.push(dateLabels[week]);
-                if (vm.showTags){
+                if (view_model.showTags) {
                     row.push(null);
                     row.push(null);
                 }
                 for (var series in sorted) {
-                    key=sorted[series];
+                    key = sorted[series];
                     row.push(leadTimeData[key][week]);
                 }
                 data.addRow(row);
             }
-            if (vm.showTags) {
+            if (view_model.showTags) {
                 for (var repo in gitData) {
                     for (var key in  gitData[repo]) {
                         var row = [];
@@ -989,55 +961,53 @@
                     columns: Array.from(Array(chart.options.colors.length + 1).keys())
                 };
             }
-            vm.leadTimeGraph = chart;
-            vm.leadTimeGraphBuilt = true;
+            view_model.leadTimeGraph = chart;
+            view_model.leadTimeGraphBuilt = true;
             chart.data = data;
             return deferred.promise();
         }
 
         function hideTPSeries(selectedItem) {
-            var col = selectedItem.column;
+            let col = selectedItem.column;
             if (selectedItem.row === null) {
-                if (vm.throughputGraph.view.columns[col] == col) {
-                    vm.throughputGraph.view.columns[col] = {
-                        label: vm.throughputGraph.data.Mf[col].label,
-                        type: vm.throughputGraph.data.Mf[col].type,
-                        calc: function() {
+                if (view_model.throughputGraph.view.columns[col] === col) {
+                    view_model.throughputGraph.view.columns[col] = {
+                        label: view_model.throughputGraph.data.Mf[col].label,
+                        type: view_model.throughputGraph.data.Mf[col].type,
+                        calc: function () {
                             return null;
                         }
                     };
-                    vm.throughputGraph.options.colors[col - 1] = '#CCCCCC';
-                }
-                else {
-                    vm.throughputGraph.view.columns[col] = col;
-                    vm.throughputGraph.options.colors[col - 1] = vm.throughputGraph.options.defaultColors[col - 1];
+                    view_model.throughputGraph.options.colors[col - 1] = '#CCCCCC';
+                } else {
+                    view_model.throughputGraph.view.columns[col] = col;
+                    view_model.throughputGraph.options.colors[col - 1] = view_model.throughputGraph.options.defaultColors[col - 1];
                 }
             }
         }
 
         function hideLTSeries(selectedItem) {
-            var col = selectedItem.column;
+            let col = selectedItem.column;
             if (selectedItem.row === null) {
-                if (vm.leadTimeGraph.view.columns[col] == col) {
-                    vm.leadTimeGraph.view.columns[col] = {
-                        label: vm.leadTimeGraph.data.Mf[col].label,
-                        type: vm.leadTimeGraph.data.Mf[col].type,
-                        calc: function() {
+                if (view_model.leadTimeGraph.view.columns[col] === col) {
+                    view_model.leadTimeGraph.view.columns[col] = {
+                        label: view_model.leadTimeGraph.data.Mf[col].label,
+                        type: view_model.leadTimeGraph.data.Mf[col].type,
+                        calc: function () {
                             return null;
                         }
                     };
-                    vm.leadTimeGraph.options.colors[col - 1] = '#CCCCCC';
-                }
-                else {
-                    vm.leadTimeGraph.view.columns[col] = col;
-                    vm.leadTimeGraph.options.colors[col - 1] = vm.leadTimeGraph.options.defaultColors[col - 1];
+                    view_model.leadTimeGraph.options.colors[col - 1] = '#CCCCCC';
+                } else {
+                    view_model.leadTimeGraph.view.columns[col] = col;
+                    view_model.leadTimeGraph.options.colors[col - 1] = view_model.leadTimeGraph.options.defaultColors[col - 1];
                 }
             }
         }
 
         function changePercentileCurve() {
             isPointsStraight = !isPointsStraight;
-            if (isPointsStraight == true) {
+            if (isPointsStraight === true) {
                 for (var key in straightDataPoints) {
                     throughputData[key] = straightDataPoints[key];
                 }
@@ -1050,19 +1020,19 @@
         }
 
         function toggleGitTags() {
-            if (!vm.hasGitRepo) {
+            if (!view_model.hasGitRepo) {
                 warningToast("No Github repos are defined for this project.\n");
                 return
             }
-            if (!vm.hasGitTag) {
+            if (!view_model.hasGitTag) {
                 warningToast("No tags can be found in current time period with current repo.\n");
                 return
             }
             buildThroughputGraph();
             buildPredictabilityGraph();
-            if (vm.viewMode == "issue") {
+            if (view_model.viewMode === "issue") {
                 buildVelocityGraph();
-                (vm.leadTimeMode == 'overall') ? buildOverallLeadTimeGraph() : buildDetailedLeadTimeGraph();
+                (view_model.leadTimeMode === 'overall') ? buildOverallLeadTimeGraph() : buildDetailedLeadTimeGraph();
             } else {
                 buildPRVelocityGraph();
                 buildPRLeadTimeGraph();
@@ -1074,7 +1044,7 @@
         }
 
         function changeVelocityCurve() {
-            velocityData = (vm.velocityRelative == false) ? absoluteBacklogHistory : relativeBacklogHistory;
+            velocityData = (view_model.velocityRelative === false) ? absoluteBacklogHistory : relativeBacklogHistory;
             buildVelocityGraph();
         }
 
@@ -1083,18 +1053,18 @@
         }
 
         function leadTimeModeChange() {
-            (vm.leadTimeMode == 'overall') ? buildOverallLeadTimeGraph() : buildDetailedLeadTimeGraph();
+            (view_model.leadTimeMode === 'overall') ? buildOverallLeadTimeGraph() : buildDetailedLeadTimeGraph();
         }
 
         function viewModeChange() {
-            if (vm.viewMode == 'issue') {
+            if (view_model.viewMode === 'issue') {
                 console.log("Issue View");
                 updateWebpageConstants();
                 updateMetrics();
             } else {
                 if (Object.keys(gitData).length === 0) {
                     warningToast("No Github repos are defined for this project.\n");
-                    vm.viewMode = 'issue';
+                    view_model.viewMode = 'issue';
                     return
                 }
                 console.log("Pull requests view");
@@ -1104,109 +1074,107 @@
         }
 
         function downloadThroughput() {
-            vm.fileName = vm.selectedProject.name + "_" + vm.viewMode + "_" +
-                formatDate(vm.searchDateSince) + "-" + formatDate(vm.searchDateUntil);
+            view_model.fileName = view_model.selectedProject.name + "_" + view_model.viewMode + "_" +
+                formatDate(view_model.searchDateSince) + "-" + formatDate(view_model.searchDateUntil);
 
-            var output = throughputLabels.map(function(e, i) {
-              return [e.slice(0, 10), throughputData["Actual"][i], throughputTickets[i]];
+            return throughputLabels.map(function (e, i) {
+                return [e.slice(0, 10), throughputData["Actual"][i], throughputTickets[i]];
             });
-            return output;
         }
 
         function projectETL() {
-            var projectETLPromise = metricsDataService.projectETL(vm.selectedProject.id, false);
-            projectETLPromise.then(function(response) {
-                warningToast("Successfully triggered ETL for " + vm.selectedProject.name + ". Please come back later when data gets loaded.");
-            }).catch(function(errorResponse) {
+            let projectETLPromise = metricsDataService.projectETL(view_model.selectedProject.id, false);
+            projectETLPromise.then(function (response) {
+                warningToast("Successfully triggered ETL for " + view_model.selectedProject.name + ". Please come back later when data gets loaded.");
+            }).catch(function (errorResponse) {
                 warningToast(errorResponse.data)
             })
         }
 
         function issueTypeETL() {
-            var issueTypeETlPromise = metricsDataService.projectETL(vm.selectedProject.id, true);
-            issueTypeETlPromise.then(function(response) {
+            let issueTypeETlPromise = metricsDataService.projectETL(view_model.selectedProject.id, true);
+            issueTypeETlPromise.then(function (response) {
                 warningToast("Successfully triggered issue type ETL.");
-                setTimeout(function() {
+                setTimeout(function () {
                     window.location.reload()
                 }, 2500)
-            }).catch(function(errorResponse) {
+            }).catch(function (errorResponse) {
                 warningToast(errorResponse.data)
             })
         }
-        
+
         function workStatesSettingsModal(ev) {
-            vm.editingWorkStates = true;
+            view_model.editingWorkStates = true;
             $mdDialog.show({
-              controller: DialogController,
-              templateUrl: 'components/configurations/editWorkStates.html',
-              parent: angular.element(document.body),
-              targetEvent: ev,
-              clickOutsideToClose:true,
-              fullscreen: $scope.customFullscreen // Only for -xs, -sm breakpoints.
+                controller: DialogController,
+                templateUrl: 'components/configurations/editWorkStates.html',
+                parent: angular.element(document.body),
+                targetEvent: ev,
+                clickOutsideToClose: true,
+                fullscreen: $scope.customFullscreen // Only for -xs, -sm breakpoints.
             })
-            .then(function() {
-              // on success
-              vm.editingWorkStates = false;
-          }, function() {
-              // on cancel
-              vm.editingWorkStates = false;
-          });
+                .then(function () {
+                    // on success
+                    view_model.editingWorkStates = false;
+                }, function () {
+                    // on cancel
+                    view_model.editingWorkStates = false;
+                });
         }
-        
+
         function workTypesSettingsModal(ev) {
-            vm.editingWorkTypes = true;
+            view_model.editingWorkTypes = true;
             $mdDialog.show({
-              controller: DialogController,
-              templateUrl: 'components/configurations/editWorkTypes.html',
-              parent: angular.element(document.body),
-              targetEvent: ev,
-              clickOutsideToClose:true,
-              fullscreen: $scope.customFullscreen // Only for -xs, -sm breakpoints.
+                controller: DialogController,
+                templateUrl: 'components/configurations/editWorkTypes.html',
+                parent: angular.element(document.body),
+                targetEvent: ev,
+                clickOutsideToClose: true,
+                fullscreen: $scope.customFullscreen // Only for -xs, -sm breakpoints.
             })
-            .then(function() {
-              // on success
-              vm.editingWorkTypes = false;
-              getWorkTypes();
-            }, function() {
-              // on cancel
-              vm.editingWorkTypes = false;
-            });
+                .then(function () {
+                    // on success
+                    view_model.editingWorkTypes = false;
+                    getWorkTypes();
+                }, function () {
+                    // on cancel
+                    view_model.editingWorkTypes = false;
+                });
         }
-        
+
         function projectSettingsModal(ev) {
-            vm.editingProject = true;
+            view_model.editingProject = true;
             $mdDialog.show({
-              controller: DialogController,
-              templateUrl: 'components/configurations/editProject.html',
-              parent: angular.element(document.body),
-              targetEvent: ev,
-              clickOutsideToClose:true,
-              fullscreen: $scope.customFullscreen // Only for -xs, -sm breakpoints.
+                controller: DialogController,
+                templateUrl: 'components/configurations/editProject.html',
+                parent: angular.element(document.body),
+                targetEvent: ev,
+                clickOutsideToClose: true,
+                fullscreen: $scope.customFullscreen // Only for -xs, -sm breakpoints.
             })
-            .then(function() {
-              // on success
-              vm.editingProject = false;
-            }, function() {
-              // on cancel
-              vm.editingProject = false;
-            });
+                .then(function () {
+                    // on success
+                    view_model.editingProject = false;
+                }, function () {
+                    // on cancel
+                    view_model.editingProject = false;
+                });
         }
 
         //helper function to build new URL based on current URL parameters
-        function buildNewURL(){
-            var currURL = window.location.href;
-            var URLQueryParams = currURL.split("&");
+        function buildNewURL() {
+            let currURL = window.location.href;
+            let URLQueryParams = currURL.split("&");
             //remove first part of URL that contains root address, so that just the params remain 
-            var initLink = URLQueryParams[0].split("?")[0].replace('metrics','reports');
+            let initLink = URLQueryParams[0].split("?")[0].replace('metrics', 'reports');
             URLQueryParams[0] = URLQueryParams[0].split("?")[1];
 
-            var newURLString = "";
-
-            for (var i=0; i < URLQueryParams.length; i++){
-                if(URLQueryParams[i].includes("teamId") || URLQueryParams[i].includes("projectId") || 
-                    URLQueryParams[i].includes("teamName") || URLQueryParams[i].includes("projectName") || 
-                    URLQueryParams[i].includes("workTypes")){
-                    if(newURLString == "")
+            let newURLString = "";
+            for (let i = 0; i < URLQueryParams.length; i++) {
+                if (URLQueryParams[i].includes("teamId") || URLQueryParams[i].includes("projectId") ||
+                    URLQueryParams[i].includes("teamName") || URLQueryParams[i].includes("projectName") ||
+                    URLQueryParams[i].includes("workTypes")) {
+                    if (newURLString === "")
                         newURLString += "?" + URLQueryParams[i];
                     else
                         newURLString += "&" + URLQueryParams[i];
@@ -1214,67 +1182,65 @@
             }
 
             //add any elements from sessionStorage as well
-            if($window.sessionStorage.selectedBoardID != null)
-                newURLString += "&boardID=" + $window.sessionStorage.selectedBoardID;      
-
+            if ($window.sessionStorage.selectedBoardID !== null)
+                newURLString += "&boardID=" + $window.sessionStorage.selectedBoardID;
 
             //SHOULD BE LAST PART OF URL STRING
             //add selected work types as well
-            newURLString += "&selectedWorkTypes="+vm.selectedWorkTypes.join(',');
-            
+            newURLString += "&selectedWorkTypes=" + view_model.selectedWorkTypes.join(',');
+
             //store in sessionStorage to add to new URL later
-            sessionStorage.setItem('newURLString', newURLString)
-            var linkDOM = document.getElementById("reports-Link");
-            var link = initLink + newURLString;
+            sessionStorage.setItem('newURLString', newURLString);
+            let linkDOM = document.getElementById("reports-Link");
+            let link = initLink + newURLString;
             linkDOM.setAttribute("href", link);
         }
 
-        function changeSelectedWorkTypes(){
+        function changeSelectedWorkTypes() {
             //get initial link
-            var linkDOM = document.getElementById("reports-Link");
-            var link = linkDOM.href;
+            let linkDOM = document.getElementById("reports-Link");
+            let link = linkDOM.href;
 
             //remove current selectedworktypes
-            var newURL = link.split("&selectedWorkTypes=")[0];
+            let newURL = link.split("&selectedWorkTypes=")[0];
 
             //get new selected
-            var workTypesArrLength = Object.keys(vm.selectedWorkTypesModel).length;
-            var selectedWorkTypesString = ""
-            for(var i=0; i<workTypesArrLength;i++){
-                if(i==workTypesArrLength-1)
-                    selectedWorkTypesString += encodeURIComponent(vm.selectedWorkTypesModel[i].label);
+            let workTypesArrLength = Object.keys(view_model.selectedWorkTypesModel).length;
+            let selectedWorkTypesString = "";
+            for (let i = 0; i < workTypesArrLength; i++) {
+                if (i === workTypesArrLength - 1)
+                    selectedWorkTypesString += encodeURIComponent(view_model.selectedWorkTypesModel[i].label);
                 else
-                    selectedWorkTypesString += encodeURIComponent(vm.selectedWorkTypesModel[i].label) + ",";
+                    selectedWorkTypesString += encodeURIComponent(view_model.selectedWorkTypesModel[i].label) + ",";
             }
 
             //append new worktypes to url
             newURL += "&selectedWorkTypes=" + selectedWorkTypesString;
-            linkDOM.setAttribute("href", newURL);            
+            linkDOM.setAttribute("href", newURL);
         }
 
-        function openMenu(){
+        function openMenu() {
             $('.mainNavDropDown').slideToggle(500);
-            var body = window.$("body");
-            setTimeout(function(){ 
-                if(vm.hamburgerMenuOpened){ 
-                    vm.hamburgerMenuOpened = false;
+            let body = window.$("body");
+            setTimeout(function () {
+                if (view_model.hamburgerMenuOpened) {
+                    view_model.hamburgerMenuOpened = false;
                     body.removeClass("hamburgerOpened");
-                }
-                else{
-                    vm.hamburgerMenuOpened = true;
+                } else {
+                    view_model.hamburgerMenuOpened = true;
                     body.addClass("hamburgerOpened")
                 }
             }, 600);
         }
 
-        function getBoardID(){
-            var promiseJiraIssueConfiguration = metricsDataService.getJiraIssueConfiguration(vm.selectedProject.id);
-            promiseJiraIssueConfiguration.then(function(responseBoard) {
-                var boardIDPromise = metricsDataService.getBoardID(responseBoard["data"]["boardName"]);
-                boardIDPromise.then(function(responseID) {
-                    $window.sessionStorage.selectedBoardID= responseID["data"]["board_id"];
-                    var linkDOM = document.getElementById("JIRA-Link");
-                    var link = $rootScope.BOARD_ID_URL + responseID["data"]['board_id'];
+        function getBoardID() {
+            let promiseJiraIssueConfiguration = metricsDataService.getJiraIssueConfiguration(view_model.selectedProject.id);
+            promiseJiraIssueConfiguration.then(function (responseBoard) {
+                let boardIDPromise = metricsDataService.getBoardID(responseBoard["data"]["boardName"]);
+                boardIDPromise.then(function (responseID) {
+                    $window.sessionStorage.selectedBoardID = responseID["data"]["board_id"];
+                    let linkDOM = document.getElementById("JIRA-Link");
+                    let link = $rootScope.BOARD_ID_URL + responseID["data"]['board_id'];
                     linkDOM.setAttribute("href", link);
                     buildNewURL();
                 });
@@ -1283,11 +1249,11 @@
         }
 
         function addWebpageConstants() {
-            if(!$rootScope.VGER_GUIDE){
+            if (!$rootScope.VGER_GUIDE) {
                 constantsService.setRootScopeConstants();
             }
 
-            var link = document.getElementById("vger_guide_link")
+            let link = document.getElementById("vger_guide_link");
             link.href = $rootScope.VGER_GUIDE;
 
             link = document.getElementById("jira_support_project_url");
@@ -1311,111 +1277,103 @@
             link = document.getElementById("jira_support_project_url5");
             link.href = $rootScope.JIRA_SUPPORT_PROJECT_URL;
 
-            link = document.getElementById("quadrant_4_link")
+            link = document.getElementById("quadrant_4_link");
             link.href = $rootScope.LEADTIMES_README;
-
-
         }
 
         function updateWebpageConstants() {
-            if(vm.viewMode == 'issue'){
-                var link = document.getElementById("quadrant_2_link");
+            let link = document.getElementById("quadrant_2_link");
+            if (view_model.viewMode === 'issue') {
                 link.href = $rootScope.BACKLOG_README;
-            }
-            else{
-                var link = document.getElementById("quadrant_2_link");
+            } else {
                 link.href = $rootScope.PR_GROWTH_README;
             }
         }
-        
+
         function DialogController($scope, $mdDialog) {
-            $scope.hide = function() {
+            $scope.hide = function () {
                 $mdDialog.hide();
             };
 
-            $scope.cancel = function() {
+            $scope.cancel = function () {
                 $mdDialog.cancel();
             };
         }
 
         function updatePRMetrics() {
-            vm.throughputGraphBuilt = false;
-            vm.velocityGraphBuilt = false;
-            vm.predictabilityGraphBuilt = false;
-            vm.leadTimeGraphBuilt = false;
-            vm.submitted = true;
-            vm.graphError = false;
-            vm.workTypeError = false;
+            view_model.throughputGraphBuilt = false;
+            view_model.velocityGraphBuilt = false;
+            view_model.predictabilityGraphBuilt = false;
+            view_model.leadTimeGraphBuilt = false;
+            view_model.submitted = true;
+            view_model.graphError = false;
+            view_model.workTypeError = false;
 
-            dateSince = formatDate(vm.searchDateSince);
-            dateUntil = formatDate(vm.searchDateUntil);
+            dateSince = formatDate(view_model.searchDateSince);
+            dateUntil = formatDate(view_model.searchDateUntil);
 
-            var repoNameList = Object.keys(gitData);
+            let repoNameList = Object.keys(gitData);
 
-            var prHistoryPromise = metricsDataService.getPRHistoryData(repoNameList,vm.selectedProject.id,vm.searchDays, dateSince, dateUntil);
-            var prStatisticsPromise = metricsDataService.getPRStatisticsData(repoNameList,vm.selectedProject.id,vm.searchDays, dateSince, dateUntil);
-            var prPredictabilityPromise = metricsDataService.getPRPredictabilityData(repoNameList,vm.selectedProject.id,vm.searchDays, dateSince, dateUntil);
-            var prLeadtimePromise = metricsDataService.getPRLeadtimeData(repoNameList,vm.selectedProject.id,vm.searchDays, dateSince, dateUntil);
-            var prBacklogPromise = metricsDataService.getPRBacklogData(repoNameList,vm.selectedProject.id,vm.searchDays, dateSince, dateUntil);
-            var throughputGitTagPromise = metricsDataService.getThroughputGitTagData(vm.selectedWorkTypes,vm.selectedProject.id,vm.searchDays, dateSince, dateUntil);
+            let prHistoryPromise = metricsDataService.getPRHistoryData(repoNameList, view_model.selectedProject.id, view_model.searchDays, dateSince, dateUntil);
+            let prStatisticsPromise = metricsDataService.getPRStatisticsData(repoNameList, view_model.selectedProject.id, view_model.searchDays, dateSince, dateUntil);
+            let prPredictabilityPromise = metricsDataService.getPRPredictabilityData(repoNameList, view_model.selectedProject.id, view_model.searchDays, dateSince, dateUntil);
+            let prLeadtimePromise = metricsDataService.getPRLeadtimeData(repoNameList, view_model.selectedProject.id, view_model.searchDays, dateSince, dateUntil);
+            let prBacklogPromise = metricsDataService.getPRBacklogData(repoNameList, view_model.selectedProject.id, view_model.searchDays, dateSince, dateUntil);
+            let throughputGitTagPromise = metricsDataService.getThroughputGitTagData(view_model.selectedWorkTypes, view_model.selectedProject.id, view_model.searchDays, dateSince, dateUntil);
 
-            throughputGitTagPromise.then(function(response) {
-                for (var repo in response.data) {
-                    var tags = response.data[repo];
-                    for (var tag in tags) {
-                        var date = response.data[repo][tag][0];
-                        var tagName = response.data[repo][tag][1];
-                        gitData[repo][date] = tagName;
+            throughputGitTagPromise.then(function (response) {
+                for (let repo in response.data) {
+                    let tags = response.data[repo];
+                    for (let tag in tags) {
+                        let date = response.data[repo][tag][0];
+                        gitData[repo][date] = response.data[repo][tag][1];
                     }
                     if (tags.length > 0) {
-                        vm.hasGitTag = true;
+                        view_model.hasGitTag = true;
                     }
                 }
                 // Build Throughput Graph
                 // ================== START prHistoryPromise  =============================
-                prHistoryPromise.then(function(response) {
+                prHistoryPromise.then(function (response) {
                     straightDataPoints = [];
 
                     throughputLabels = [];
-                    var dataPoints = [];
-                    for (var tuple in response.data) {
-                        var indexString = response.data[tuple][0];
-                        if(indexString.includes("Straight")){
-                            console.log("made it")
-                            if(indexString == "ninetiethStraight" || indexString == "eightiethStraight")
-                                continue;
-                            else{
-                                if (indexString == 'tenthStraight') {
+                    let dataPoints = [];
+                    for (let tuple in response.data) {
+                        let indexString = response.data[tuple][0];
+                        if (indexString.includes("Straight")) {
+                            console.log("made it");
+                            if (!(indexString === "ninetiethStraight" || indexString === "eightiethStraight")) {
+                                if (indexString === 'tenthStraight') {
                                     indexString = '90%';
-                                } else if (indexString == 'twentiethStraight') {
+                                } else if (indexString === 'twentiethStraight') {
                                     indexString = '80%';
-                                } else if (indexString == 'fiftiethStraight') {
+                                } else if (indexString === 'fiftiethStraight') {
                                     indexString = '50%';
                                 }
                                 straightDataPoints[indexString] = response.data[tuple][1];
                             }
-                        }
-                        else
+                        } else
                             dataPoints.push(response.data[tuple][1]);
                     }
                     throughputData['Actual'] = dataPoints;
 
-                    prStatisticsPromise.then(function(response) {
+                    prStatisticsPromise.then(function (response) {
                         for (var key in response.data) {
-                            var insertKey = '';
-                            if (key == 'ninetieth') {
+                            let insertKey = '';
+                            if (key === 'ninetieth') {
                                 continue;
-                            } else if (key == 'eightieth') {
+                            } else if (key === 'eightieth') {
                                 continue;
-                            } else if (key == 'fiftieth') {
+                            } else if (key === 'fiftieth') {
                                 insertKey = '50%';
-                            } else if (key == 'twentieth') {
+                            } else if (key === 'twentieth') {
                                 insertKey = '80%';
-                            } else if (key == 'tenth') {
+                            } else if (key === 'tenth') {
                                 insertKey = '90%';
                             }
                             var weeks = response.data[key];
-                            var dataPoints = [];
+                            let dataPoints = [];
                             for (var week in weeks) {
                                 dataPoints.push(weeks[week][1]);
                             }
@@ -1431,71 +1389,70 @@
                         }
                         googleChartApiPromise.then(buildThroughputGraph) // <---
                     });
-                }).catch(function(errorResponse) {
+                }).catch(function (errorResponse) {
                     errorHandler(errorResponse, 'throughput');
                 });
                 // ================== END prHistoryPromise  ===============================
 
                 // Build Predictability Graph
                 // ================== START predictabilityPromise  ==========================
-                prPredictabilityPromise.then(function(response) {
+                prPredictabilityPromise.then(function (response) {
                     predictabilityLabels = [];
-                    var dataPoints = [];
+                    let dataPoints = [];
                     for (var week in response.data) {
                         predictabilityLabels.push(response.data[week][0]);
                         dataPoints.push(response.data[week][1]);
                     }
                     predictabilityData = dataPoints;
                     googleChartApiPromise.then(buildPredictabilityGraph); // <---
-                }).catch(function(errorResponse) {
+                }).catch(function (errorResponse) {
                     errorHandler(errorResponse, 'predictability');
                 });
                 // ================== END predictabilityPromise  ==========================
 
                 // Build Leadtime Graph
                 // ================== START leadTimePromise ==========================
-                prLeadtimePromise.then(function(response) {
+                prLeadtimePromise.then(function (response) {
                     leadTimeLabels = [];
                     // console.log('leadTimePromise returned ', response.status, ' with response data: ', response.data);
                     for (var key in response.data) {
                         var weeks = response.data[key];
-                        var insertKey = '';
-                        if (key == 'ninetieth'){
+                        let insertKey = '';
+                        if (key === 'ninetieth') {
                             insertKey = '90%';
-                        } else if (key == 'eightieth') {
+                        } else if (key === 'eightieth') {
                             insertKey = '80%';
-                        } else if (key == 'fiftieth') {
+                        } else if (key === 'fiftieth') {
                             insertKey = '50%';
                         }
-                        var tmpLabels = [];
-                        var dataPoints = [];
+                        let tmpLabels = [];
+                        let dataPoints = [];
                         for (var week in weeks) {
                             tmpLabels.push(weeks[week][0]);
                             dataPoints.push(weeks[week][1]);
                         }
-                        if (leadTimeLabels.length < 1){
+                        if (leadTimeLabels.length < 1) {
                             leadTimeLabels = (tmpLabels);
                         }
-
                         leadTimeData[insertKey] = dataPoints;
                     }
 
                     googleChartApiPromise.then(buildPRLeadTimeGraph); // <---
 
-                }).catch(function(errorResponse) {
+                }).catch(function (errorResponse) {
                     errorHandler(errorResponse, 'leadtime');
                 });
                 // ================== END leadTimePromise ==========================
 
                 // Build Backlog Graph
                 // ================== START backlogPromise =========================
-                prBacklogPromise.then(function(response) {
+                prBacklogPromise.then(function (response) {
                     velocityLabels = [];
                     velocityData = [];
                     backlogSeries = [];
                     for (var key in response.data) {
                         var weeks = response.data[key];
-                        var dataPoints = [];
+                        let dataPoints = [];
                         for (var week in weeks) {
                             if (week == 0) {
                                 continue;
@@ -1512,132 +1469,127 @@
                     // From API it's using start of week as week label so slicing the label make it shifted 1 week later
                     // which is exactly what UI wants: use end of week as label.
                     // Also since the current week has not ended yet so last value get ignored
-                    velocityLabels = velocityLabels.slice(1,velocityLabels.length);
+                    velocityLabels = velocityLabels.slice(1, velocityLabels.length);
                     googleChartApiPromise.then(buildPRVelocityGraph); // <---
-                }).catch(function(errorResponse) {
+                }).catch(function (errorResponse) {
                     errorHandler(errorResponse, 'velocity');
                 });
                 // ================== END backlogPromise ===========================
             });
-
         }
 
-
-
         function updateMetrics() {
-            vm.throughputGraphBuilt = false;
-            vm.velocityGraphBuilt = false;
-            vm.predictabilityGraphBuilt = false;
-            vm.leadTimeGraphBuilt = false;
-            vm.submitted = true;
-            vm.graphError = false;
-            vm.workTypeError = false;
-            vm.viewMode = 'issue';
-            throughputLabels = [], velocityLabels = [], predictabilityLabels = [], leadTimeLabels = [];
+            view_model.throughputGraphBuilt = false;
+            view_model.velocityGraphBuilt = false;
+            view_model.predictabilityGraphBuilt = false;
+            view_model.leadTimeGraphBuilt = false;
+            view_model.submitted = true;
+            view_model.graphError = false;
+            view_model.workTypeError = false;
+            view_model.viewMode = 'issue';
+            throughputLabels = [];
+            velocityLabels = [];
+            predictabilityLabels = [];
+            leadTimeLabels = [];
 
-            dateSince = formatDate(vm.searchDateSince);
-            dateUntil = formatDate(vm.searchDateUntil);
+            dateSince = formatDate(view_model.searchDateSince);
+            dateUntil = formatDate(view_model.searchDateUntil);
 
             // All Graphs Promises
-            var throughputGitRepoPromise = metricsDataService.getThroughputGitRepoData(vm.selectedWorkTypes,vm.selectedProject.id,vm.searchDays, dateSince, dateUntil);
-            var throughputGitTagPromise = metricsDataService.getThroughputGitTagData(vm.selectedWorkTypes,vm.selectedProject.id,vm.searchDays, dateSince, dateUntil);
-            
+            let throughputGitRepoPromise = metricsDataService.getThroughputGitRepoData(view_model.selectedWorkTypes, view_model.selectedProject.id, view_model.searchDays, dateSince, dateUntil);
+            let throughputGitTagPromise = metricsDataService.getThroughputGitTagData(view_model.selectedWorkTypes, view_model.selectedProject.id, view_model.searchDays, dateSince, dateUntil);
+
             // Throughput Graph Promises
-            var throughputStatisticsPromise = metricsDataService.getThroughputStatisticsData(vm.selectedWorkTypes,vm.selectedProject.id,vm.searchDays, dateSince, dateUntil);
-            var throughputHistoryPromise = metricsDataService.getThroughputHistoryData(vm.selectedWorkTypes,vm.selectedProject.id,vm.searchDays, dateSince, dateUntil);
+            let throughputStatisticsPromise = metricsDataService.getThroughputStatisticsData(view_model.selectedWorkTypes, view_model.selectedProject.id, view_model.searchDays, dateSince, dateUntil);
+            let throughputHistoryPromise = metricsDataService.getThroughputHistoryData(view_model.selectedWorkTypes, view_model.selectedProject.id, view_model.searchDays, dateSince, dateUntil);
 
             // Velocity Graph Promises
-            var velocityPromise = metricsDataService.getVelocityData(vm.selectedWorkTypes,vm.selectedProject.id,vm.searchDays, dateSince, dateUntil);
+            let velocityPromise = metricsDataService.getVelocityData(view_model.selectedWorkTypes, view_model.selectedProject.id, view_model.searchDays, dateSince, dateUntil);
 
             // Predictability Graph Promises
-            var predictabilityPromise = metricsDataService.getPredictabilityData(vm.selectedWorkTypes,vm.selectedProject.id,vm.searchDays, dateSince, dateUntil);
+            let predictabilityPromise = metricsDataService.getPredictabilityData(view_model.selectedWorkTypes, view_model.selectedProject.id, view_model.searchDays, dateSince, dateUntil);
 
             // LeadTime Graph Promises
-            var workStatesPromise = metricsDataService.getWorkStates(vm.selectedWorkTypes,vm.selectedProject.id, vm.searchDays, dateSince, dateUntil);
-            var leadTimePromise = metricsDataService.getLeadTimeData(vm.selectedWorkTypes,vm.selectedProject.id,vm.searchDays, dateSince, dateUntil);
+            let workStatesPromise = metricsDataService.getWorkStates(view_model.selectedWorkTypes, view_model.selectedProject.id, view_model.searchDays, dateSince, dateUntil);
+            let leadTimePromise = metricsDataService.getLeadTimeData(view_model.selectedWorkTypes, view_model.selectedProject.id, view_model.searchDays, dateSince, dateUntil);
 
 
             // ================== START throughputGitRepoPromise ================
-            throughputGitRepoPromise.then(function(response) {
-                // console.log('throughputGitRepoPromise returned ', response.status, ' with response data: ', response.data);
-                for (var repo in response.data) {
-                    var repoName = response.data[repo];
+            throughputGitRepoPromise.then(function (response) {
+                for (let repo in response.data) {
+                    let repoName = response.data[repo];
                     gitData[repoName] = {};
                 }
                 if (response.data.length > 0) {
-                    vm.hasGitRepo = true;
+                    view_model.hasGitRepo = true;
                 }
                 // ================== START throughputGitTagPromise ==================
-                throughputGitTagPromise.then(function(response) {
-                    // console.log('throughputGitTagPromise returned ', response.status, ' with response data: ', response.data);
-                    for (var repo in response.data) {
-                        var tags = response.data[repo];
-                        for (var tag in tags) {
-                            var date = response.data[repo][tag][0];
+                throughputGitTagPromise.then(function (response) {
+                    for (let repo in response.data) {
+                        let tags = response.data[repo];
+                        for (let tag in tags) {
                             var tagName = response.data[repo][tag][1];
+                            let date = response.data[repo][tag][0];
                             gitData[repo][date] = tagName;
                         }
                         if (tags.length > 0) {
-                            vm.hasGitTag = true;
+                            view_model.hasGitTag = true;
                         }
                     }
                     // Build Throughput Graph
                     // ================== START throughputHistoryPromise ================
-                    throughputHistoryPromise.then(function(response) {
+                    throughputHistoryPromise.then(function (response) {
                         // console.log('throughputHistoryPromise returned ', response.status, ' with response data: ', response.data);
-                        
+
                         //split response.data because it contains throughput data and tickets
-                        var ticketStrings = response.data.slice(response.data.indexOf("tickets"))
+                        let ticketStrings = response.data.slice(response.data.indexOf("tickets"));
                         //zeroeth index is "tickets", not needed anymore
                         ticketStrings = ticketStrings.splice(1);
                         //add parenbtheses to each string for easier copy and paste into JIRA
-                        for(var i=0; i<ticketStrings.length; i++){
-                            throughputTickets[i]="(" + ticketStrings[i][1] + ")";
-                        };
-
-                        var dataPoints = [];
+                        for (let i = 0; i < ticketStrings.length; i++) {
+                            throughputTickets[i] = "(" + ticketStrings[i][1] + ")";
+                        }
+                        let dataPoints = [];
                         straightDataPoints = [];
-                        for (var tuple in response.data) {
-                            var indexString = response.data[tuple][0];
-                            if(indexString.includes("Straight")){
-                                if(indexString == "ninetiethStraight" || indexString == "eightiethStraight")
-                                    continue;
-                                else{
-                                    if (indexString == 'tenthStraight') {
+                        for (let tuple in response.data) {
+                            let indexString = response.data[tuple][0];
+                            if (indexString.includes("Straight")) {
+                                if (!(indexString === "ninetiethStraight" || indexString === "eightiethStraight")) {
+                                    if (indexString === 'tenthStraight') {
                                         indexString = '90%';
-                                    } else if (indexString == 'twentiethStraight') {
+                                    } else if (indexString === 'twentiethStraight') {
                                         indexString = '80%';
-                                    } else if (indexString == 'fiftiethStraight') {
+                                    } else if (indexString === 'fiftiethStraight') {
                                         indexString = '50%';
                                     }
                                     straightDataPoints[indexString] = response.data[tuple][1];
                                 }
-                            }
-                            else
+                            } else {
                                 dataPoints.push(response.data[tuple][1]);
+                            }
                         }
 
                         throughputData['Actual'] = dataPoints;
 
                         // ================== START throughputStatisticsPromise ============
-                        throughputStatisticsPromise.then(function(response) {
+                        throughputStatisticsPromise.then(function (response) {
                             //console.log('throughputStatisticsPromise returned ', response.status, ' with response data: ', response.data);
                             for (var key in response.data) {
-                                var insertKey = '';
-                                if (key == 'ninetieth') {
+                                let insertKey = '';
+                                if (key === 'ninetieth') {
                                     continue;
-                                } else if (key == 'eightieth') {
+                                } else if (key === 'eightieth') {
                                     continue;
-                                } else if (key == 'fiftieth') {
+                                } else if (key === 'fiftieth') {
                                     insertKey = '50%';
-                                } else if (key == 'twentieth') {
+                                } else if (key === 'twentieth') {
                                     insertKey = '80%';
-                                } else if (key == 'tenth') {
+                                } else if (key === 'tenth') {
                                     insertKey = '90%';
                                 }
 
                                 var weeks = response.data[key];
-                                var dataPoints = [];
+                                let dataPoints = [];
                                 for (var week in weeks) {
                                     dataPoints.push(weeks[week][1]);
                                 }
@@ -1652,37 +1604,36 @@
                                 throughputData[key] = curvedDataPoints[key];
                             }
                             googleChartApiPromise.then(buildThroughputGraph) // <---
-                        }).catch(function(errorResponse) {
-                            // console.log('throughputStatisticsPromise failed: ', errorResponse);
+                        }).catch(function (errorResponse) {
                             errorHandler(errorResponse, 'throughput');
                         });
                         // ================== END throughputStatisticsPromise ===============
 
-                    }).catch(function(errorResponse) {
-                        // console.log('throughputHistoryPromise failed: ', errorResponse);
+                    }).catch(function (errorResponse) {
                         errorHandler(errorResponse, 'throughput');
                     });
                     // ================== END throughputHistoryPromise ==================
 
                     // Build Velocity Graph
                     // ================== START velocityPromise =================================
-                    velocityPromise.then(function(response) {
-                        // console.log('velocityPromise returned ', response.status, ' with response data: ', response.data);
-                        var backlogSize = 0;
-                        absoluteBacklogHistory = [], relativeBacklogHistory = [], backlogSeries = [];
+                    velocityPromise.then(function (response) {
+                        let backlogSize = 0;
+                        absoluteBacklogHistory = [];
+                        relativeBacklogHistory = [];
+                        backlogSeries = [];
 
                         for (var key in response.data) {
                             var weeks = response.data[key];
-                            var dataPoints = [];
+                            let dataPoints = [];
                             for (var week in weeks) {
-                                if (week == 0) {
+                                if (week === 0) {
                                     backlogSize = weeks[week][1];
                                     continue;
                                 }
                                 dataPoints.push(weeks[week][1]);
                             }
-                            var tmpRelativeBacklogHistory = [];
-                            for (var i = 0; i <= dataPoints.length-1; i++) {
+                            let tmpRelativeBacklogHistory = [];
+                            for (let i = 0; i <= dataPoints.length - 1; i++) {
                                 tmpRelativeBacklogHistory.push(dataPoints[i] - backlogSize);
                             }
                             backlogSeries.push(key);
@@ -1693,102 +1644,95 @@
                         for (var week in weeks) {
                             velocityLabels.push(weeks[week][0]);
                         }
-                        velocityLabels = velocityLabels.slice(1,velocityLabels.length);
+                        velocityLabels = velocityLabels.slice(1, velocityLabels.length);
                         velocityData = absoluteBacklogHistory;
-                        vm.velocityRelative = false;
+                        view_model.velocityRelative = false;
                         googleChartApiPromise.then(buildVelocityGraph); // <---
-                    }).catch(function(errorResponse) {
-                        // console.log('velocityPromise failed: ', errorResponse);
+                    }).catch(function (errorResponse) {
                         errorHandler(errorResponse, 'velocity');
                     });
                     // ================== END velocityPromise ===================================
 
                     // Build Predictability Graph
                     // ================== START predictabilityPromise  ==========================
-                    predictabilityPromise.then(function(response) {
-                        // console.log('predictabilityPromise returned ', response.status, ' with response data: ', response.data);
-                        var dataPoints = [];
+                    predictabilityPromise.then(function (response) {
+                        let dataPoints = [];
                         for (var week in response.data) {
                             predictabilityLabels.push(response.data[week][0]);
                             dataPoints.push(response.data[week][1]);
                         }
                         predictabilityData = dataPoints;
                         googleChartApiPromise.then(buildPredictabilityGraph); // <---
-                    }).catch(function(errorResponse) {
-                        // console.log('predictabilityPromise failed: ', errorResponse);
+                    }).catch(function (errorResponse) {
                         errorHandler(errorResponse, 'predictability');
                     });
                     // ================== END predictabilityPromise  ==========================
 
                     // Build Lead Time Graph
                     // ================== START workStatesPromise  ==========================
-                    workStatesPromise.then(function(response) {
-                        // console.log('workStatesPromise returned ', response.status, ' with response data: ', response.data);
-                        var workStates= {'Overall': 0};
-                        for (var i in response.data['workStates']){
+                    workStatesPromise.then(function (response) {
+                        let workStates = {'Overall': 0};
+                        for (let i in response.data['workStates']) {
                             workStates[response.data['workStates'][i]['name']] = i + 1;
                         }
                         // ================== START leadTimePromise ==========================
-                        leadTimePromise.then(function(response) {
-                            // console.log('leadTimePromise returned ', response.status, ' with response data: ', response.data);
+                        leadTimePromise.then(function (response) {
                             leadTimeStages = new Array(Object.keys(workStates).length).fill(null);
-                            leadTimeStages = leadTimeStages.filter(function(n){ return n != undefined });
+                            leadTimeStages = leadTimeStages.filter(function (n) {
+                                return n !== undefined
+                            });
                             for (var key in response.data) {
-                                var stages = response.data[key];
-                                var insertKey = '';
-                                if (key == 'ninetieth'){
+                                let stages = response.data[key];
+                                let insertKey = '';
+                                if (key === 'ninetieth') {
                                     insertKey = '90%';
-                                } else if (key == 'eightieth') {
+                                } else if (key === 'eightieth') {
                                     insertKey = '80%';
-                                } else if (key == 'fiftieth') {
+                                } else if (key === 'fiftieth') {
                                     insertKey = '50%';
                                 }
                                 leadTimeData[insertKey] = new Array(Object.keys(workStates).length).fill(0);
-                                for (var stage in stages) {
-                                    var tmpLabels = [];
-                                    var dataPoints = [];
+                                for (let stage in stages) {
+                                    let tmpLabels = [];
+                                    let dataPoints = [];
                                     var weeks = stages[stage];
-                                    for (var week in weeks){
+                                    for (var week in weeks) {
                                         tmpLabels.push(weeks[week][0]);
                                         dataPoints.push(weeks[week][1]);
                                     }
                                     leadTimeData[insertKey][parseInt(workStates[stage])] = dataPoints;
                                     leadTimeStages[parseInt(workStates[stage])] = stage;
-                                    if (leadTimeLabels.length < 1){
+                                    if (leadTimeLabels.length < 1) {
                                         leadTimeLabels = (tmpLabels);
                                     }
                                 }
                             }
-                            vm.leadTimeTrends = false;
-                            vm.leadTimeMode = 'overall';
-                            vm.leadTimePercentile = '90%';
+                            view_model.leadTimeTrends = false;
+                            view_model.leadTimeMode = 'overall';
+                            view_model.leadTimePercentile = '90%';
                             googleChartApiPromise.then(buildOverallLeadTimeGraph); // <---
 
-                        }).catch(function(errorResponse) {
-                            // console.log('leadTimePromise failed: ', errorResponse);
+                        }).catch(function (errorResponse) {
                             errorHandler(errorResponse, 'leadTime');
                         });
                         // ================== END leadTimePromise ==========================
-                    }).catch(function(errorResponse) {
-                        // console.log('workStatesPromise failed: ', errorResponse);
+                    }).catch(function (errorResponse) {
                         errorHandler(errorResponse, 'leadTime');
                     });
                     // ================== END workStatesPromise ==========================
 
-                }).catch(function(errorResponse) {
-                    // console.log('throughputGitTagPromise failed: ', errorResponse);
-                    vm.hasGitTag = false;
+                }).catch(function (errorResponse) {
+                    view_model.hasGitTag = false;
                     errorHandler(errorResponse, 'gitTag');
                 });
                 // ================== END throughputGitTagPromise ====================
 
-            }).catch(function(errorResponse) {
-                // console.log('throughputGitRepoPromise failed: ', errorResponse);
-                vm.hasGitRepo = false;
+            }).catch(function (errorResponse) {
+                view_model.hasGitRepo = false;
                 errorHandler(errorResponse, 'gitRepo');
             });
             // ================== END throughputGitRepoPromise ==================
-            
+
             //build new URL for reports
             changeSelectedWorkTypes();
         }

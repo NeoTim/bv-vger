@@ -6,7 +6,7 @@
 (function(){
     'use strict';
 
-    var app = angular.module('vgerRouter', ['ui.router']);
+    let app = angular.module('vgerRouter', ['ui.router']);
     app.config(function($stateProvider, $urlRouterProvider, $httpProvider) {
 
         $urlRouterProvider.otherwise('/team');
@@ -34,7 +34,7 @@
         .state('reports', {
             url: '/reports',
             templateUrl: '/reports/build/index.html'
-        })
+        });
         
         // Prevents browser from sending preflight OPTIONS requests before POST/PUT
         $httpProvider.defaults.headers.common = {};

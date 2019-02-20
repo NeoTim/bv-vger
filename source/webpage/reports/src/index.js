@@ -1,27 +1,26 @@
 import React from "react";
-import { render } from "react-dom";
+import {render} from "react-dom";
 import BreadCrumbTrail from "./breadCrumbTrail";
-import Menus from "./menus"; 
+import Menus from "./menus";
 import Main from "./main";
 
-import { constants } from './reportConstants.js';
+import {constants} from './reportConstants.js';
 
 // ------------------------- PRE ------------------------------ //
 
 //for counters
-var i = 0;
+let i = 0;
 
 function efficientSort(array) {
-  var len = array.length;
+  let len = array.length;
   if(len < 2) { 
     return array;
   }
-  var pivot = Math.ceil(len/2);
+  let pivot = Math.ceil(len / 2);
   return merge(efficientSort(array.slice(0,pivot)), efficientSort(array.slice(pivot)));
-};
-
+}
 function merge(left, right) {
-  var result = [];
+  let result = [];
   while((left.length > 0) && (right.length > 0)) {
     if(left[0].workingDays > right[0].workingDays) {
       result.push(left.shift());
@@ -33,7 +32,7 @@ function merge(left, right) {
 
   result = result.concat(left, right);
   return result;
-};
+}
 
 // ------------------------- PRE ------------------------------ //
 
@@ -50,7 +49,7 @@ class Root extends React.Component {
 
     this.state = {
       renderIsReady: false
-    }
+    };
 
     this.loadScripts = this.loadScripts.bind(this);
     this.gatherInitialInformation = this.gatherInitialInformation.bind(this);
@@ -62,16 +61,16 @@ class Root extends React.Component {
   }
 
   loadScripts(){
-    var reference = this;
-    var url = "https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js";
+    let reference = this;
+    let url = "https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.12.4/js/bootstrap-select.min.js";
     window.$.getScript(url).done(function( script, textStatus ) {
       let promise = new Promise(function(resolve, reject){
           reference.gatherInitialInformation();
           resolve(true);      
-      })
+      });
       promise.then(function(response){
-        console.log(textStatus)
-        if(textStatus == "success")
+        console.log(textStatus);
+        if(textStatus === "success")
           reference.setState({renderIsReady: true});
       })      
     })
@@ -79,9 +78,9 @@ class Root extends React.Component {
 
   slideToggle(){
     window.$('.mainNavDropDown').slideToggle(500);
-    var body = window.$("body");
-    if(this.menuOpened == false){
-      body.addClass("hamburgerOpened")
+    let body = window.$("body");
+    if(this.menuOpened === false){
+      body.addClass("hamburgerOpened");
       this.menuOpened = true;
     }
     else{
@@ -92,8 +91,7 @@ class Root extends React.Component {
 
   gatherInitialInformation(){
     //get paramaters of project from sessionStorage and update URL
-    var currURL = window.location.href;
-    var objURL = currURL;
+    let objURL = window.location.href;
 
     try{
       objURL = objURL.split("?");
@@ -104,8 +102,8 @@ class Root extends React.Component {
         window.location.replace(this.obj['baseURL'].split("reports")+"#!/team");
       }
       else{
-        var queryStr = objURL[1].split("&");
-        var tempIndex = "";
+        let queryStr = objURL[1].split("&");
+        let tempIndex = "";
         for(i=0; i<queryStr.length;i++){
           tempIndex = queryStr[i].split("=");
           this.obj[tempIndex[0]] = tempIndex[1];
@@ -124,29 +122,29 @@ class Root extends React.Component {
   }
 
   downloadData(){
-    var csvContent = "data:text/csv;charset=utf-8,";
+    let date;
+    let csvContent = "data:text/csv;charset=utf-8,";
     //since first set of data is throughput, have title this
-    if(this.currentChart == "throughput"){
+    if(this.currentChart === "throughput"){
       csvContent += "Quarterly throughput Raw Data, , Likeliness \r\n";
       csvContent += "Date, Actual, ,50%, 80%, 90%  \r\n";
       for(i = 0; i < this.throughputData.length; i++){
-        var date = String(this.throughputData[i][0]).split("00:00:00")[0];
-        var info = this.throughputData[i].splice(1,this.throughputData.length+1);
+        date = String(this.throughputData[i][0]).split("00:00:00")[0];
+        let info = this.throughputData[i].splice(1, this.throughputData.length + 1);
         info = info.join(",");
         csvContent += date + "," + info + "\r\n";
-      }; 
+      }
     }
-    else if(this.currentChart == "leadtime"){
+    else if(this.currentChart === "leadtime"){
       csvContent += "Leadtime Raw Data \r\n";
       csvContent += "Closed Date, Name, Number of Working Days  \r\n";
       //sort leadtime by number of working days first
-      var newArr = efficientSort(this.leadTimeData);
-      this.leadTimeData = newArr;
+      this.leadTimeData = efficientSort(this.leadTimeData);
 
       for(i = 0; i < this.leadTimeData.length; i++){
-        var date = String(new Date(this.leadTimeData[i].endTime * 1000)).substring(0,15);
-        var row = "";
-        var reference = this;
+        date = String(new Date(this.leadTimeData[i].endTime * 1000)).substring(0, 15);
+        let row = "";
+        let reference = this;
         Object.keys(this.leadTimeData[i]).map(function(key){
           if(key === "endTime"){}
           else if(key === "workingDays"){
@@ -156,13 +154,13 @@ class Root extends React.Component {
           else{
             row += reference.leadTimeData[i][key] + "," ;
           }
-        })
+        });
         csvContent += date + "," + row + "\r\n";     
       }
     }
-    var encodedUri = encodeURI(csvContent);
-  
-    var link = document.createElement("a");
+    let encodedUri = encodeURI(csvContent);
+
+    let link = document.createElement("a");
     link.setAttribute("href", encodedUri);
     link.setAttribute("download", decodeURIComponent(this.obj.projectName)+".csv");
     link.innerHTML= "Click Here to Download";
@@ -232,7 +230,7 @@ class Root extends React.Component {
       );
     }
     else{
-      var isLoaded = false;
+      let isLoaded = false;
       return (
         <div>
           <Menus data={this.obj}/>

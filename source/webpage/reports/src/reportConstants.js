@@ -47,7 +47,7 @@ const THROUGHPUTOPTIONS = {
       width: '80%'
     },
   },
-}
+};
 
 const THROUGHPUTCOLUMNS = [
   {
@@ -74,7 +74,7 @@ const THROUGHPUTCOLUMNS = [
     type: 'number',
     label: '50%',
   }
-]
+];
 
 const LEADTIMEOPTIONS = {
   curveType: '',
@@ -126,7 +126,7 @@ const LEADTIMEOPTIONS = {
       height: '80%',
       width: '80%'
   },
-}
+};
 
 const LEADTIMECOLUMNS = [
   {
@@ -142,16 +142,16 @@ const LEADTIMECOLUMNS = [
     role: 'tooltip', 
     p: {'html': true},
   }     
-]
+];
 
-const JIRA_BOARD_URL = "JIRA_URL?rapidView="
+const JIRA_BOARD_URL = "JIRA_URL?rapidView=";
 const APIGATEWAYPROD = 'API GATEWAY INSTANCE PROD';
-const APIGATEWAYPRODURL ='S3 SITE URL PROD'
+const APIGATEWAYPRODURL ='S3 SITE URL PROD';
 const APIGATEWAYQA = 'API GATEWAY INSTANCE QA';
-const APIGATEWAYQAURL = 'S3 SITE URL QA'
-const JIRAURL = 'company_url/jira/'
+const APIGATEWAYQAURL = 'S3 SITE URL QA';
+const JIRAURL = 'company_url/jira/';
 
-var constants = {
+let constants = {
   QUARTERDATESORGANIZED: QUARTERDATESORGANIZED,
   DATETOQUARTER: DATETOQUARTER,
   THROUGHPUTCOLUMNS: THROUGHPUTCOLUMNS,
@@ -162,7 +162,7 @@ var constants = {
   JIRA_BOARD_URL: JIRA_BOARD_URL,
   APIGATEWAYPRODURL: APIGATEWAYPRODURL,
   APIGATEWAYQA: APIGATEWAYQA,
-  APIGATEWAYQAURL: APIGATEWAYQAURL, 
+  APIGATEWAYQAURL: APIGATEWAYQAURL,
   JIRAURL: JIRAURL
 };
 

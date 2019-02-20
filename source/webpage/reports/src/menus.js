@@ -1,10 +1,10 @@
 import React from 'react';
 
-var i = 0;
+let i = 0;
 
 class Menus extends React.Component {
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
     this.dataset = [];
     this.selectedData = [];
     this.workTypeItems = [];
@@ -15,17 +15,17 @@ class Menus extends React.Component {
   }
 
   submitData() {
-    var workTypes = window.$('#worktypesSelect').val();
-    var numOfQuarters = window.$('#quartersSelect').val();
-    var data = {'workTypes': workTypes, 'quarters': numOfQuarters};
+    let workTypes = window.$('#worktypesSelect').val();
+    let numOfQuarters = window.$('#quartersSelect').val();
+    let data = {'workTypes': workTypes, 'quarters': numOfQuarters};
     this.props.onSubmit(data);
   }
 
   // helper function for menus that should only be called once, so it is called in root and the component info is passed as props
   createWorkTypeSelectedItems() {
-    if((this.props.data.dataRendered == true || Object.keys(this.props.data.newData).length != 0) && !this.pageRendered){
+    if((this.props.data.dataRendered === true || Object.keys(this.props.data.newData).length !== 0) && !this.pageRendered){
       this.pageRendered = true;
-      console.log(this.props.data)
+      console.log(this.props.data);
       //create option strings for each work type separated by comma
       this.dataset = this.props.data.workTypes.split(",");
       this.props.data.selectedWorkTypes = this.props.data.selectedWorkTypes.split(",");
@@ -90,7 +90,8 @@ class Menus extends React.Component {
               </div>
         </div>
       )
-    }    
-  };
+    }
+
+}
 
 export default Menus;
