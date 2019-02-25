@@ -2,16 +2,16 @@ import React from 'react';
 import {Chart} from 'react-google-charts';
 
 import {constants} from './reportConstants.js';
+import * as shared_constants from '../../shared/constants.js';
 
 let i = 0;
 let j = 0;
-let k = 0;
 let rawScatterChartData = [];
 let rawThroughputData = [];
 
 function openIssueInJIRA(Chart, point){
   let issueID = rawScatterChartData[point].name;
-  let url = constants.JIRAURL + "browse/" + issueID;
+  let url = constants.JIRA_URL + "browse/" + issueID;
   window.open(url, '_blank');
 }
 
@@ -30,10 +30,9 @@ class Main extends React.Component {
       },
     ];
     
-    //the most recent quarter to end based on QUARTERDATESORGANIZED
+    //the most recent quarter to end based on QUARTER_DATES_ORGANIZED
     this.mostRecentQuarterIndex = -1;
     this.numOfQuarters = 4;
-    this.apiGatewayType = "";
     this.firstPageEntry = true;
     this.dates = [];
     this.noLeadTimeDataPresent = false;
@@ -84,8 +83,8 @@ class Main extends React.Component {
       let closestQuarterIndex = -1;
 
       //find most recent quarter end
-      for(i=0; i<constants.QUARTERDATESORGANIZED.length; i++){
-        let quarterDateToMS = new Date(constants.QUARTERDATESORGANIZED[i]);
+      for(i=0; i<constants.QUARTER_DATES_ORGANIZED.length; i++){
+        let quarterDateToMS = new Date(constants.QUARTER_DATES_ORGANIZED[i]);
         quarterDateToMS = quarterDateToMS.getTime();
 
         let thisQuarterDifference = todaysDateToMS - quarterDateToMS;
@@ -99,7 +98,7 @@ class Main extends React.Component {
       //using most recent quarter, set first amount of quarters up to and including this quarter equal to current year
       let currYear = reference.state.todaysDate.getFullYear();
       for(let j = reference.mostRecentQuarterIndex; j > -1; j--){
-        reference.state.quarterEnddatesArray.push(constants.QUARTERDATESORGANIZED[j]+"/"+currYear);  
+        reference.state.quarterEnddatesArray.push(constants.QUARTER_DATES_ORGANIZED[j]+"/"+currYear);
       }
       
       //set remaining quarters while decrementing year
@@ -111,7 +110,7 @@ class Main extends React.Component {
           currYear = currYear - 1;
           loopCounter = 3;
         }
-        reference.state.quarterEnddatesArray.push(constants.QUARTERDATESORGANIZED[loopCounter]+"/"+currYear);
+        reference.state.quarterEnddatesArray.push(constants.QUARTER_DATES_ORGANIZED[loopCounter]+"/"+currYear);
         counter++;
         loopCounter--;
       }
@@ -130,16 +129,7 @@ class Main extends React.Component {
     let workTypeStr = this.props.data.selectedWorkTypes;
     let historyStr = 'quarterly/history';
 
-    //find API gateway type (Prod, QA)
-    if(this.props.data.baseURL.indexOf(constants.APIGATEWAYPRODURL) >= 0)
-      this.apiGatewayType = constants.APIGATEWAYPROD;
-    else if(this.props.data.baseURL.indexOf(constants.APIGATEWAYQAURL) >= 0)
-      this.apiGatewayType = constants.APIGATEWAYQA;
-    //USED FOR TESTING, if on localhost
-    else if(this.props.data.baseURL.indexOf("localhost") >= 0 || this.props.data.baseURL.indexOf("127.0.0.1") >= 0)
-      this.apiGatewayType = constants.APIGATEWAYQA;
-
-    let historyAPIStr = this.apiGatewayType + 'project/' + projectID + '/' + 'throughput/' + historyStr + '?';
+    let historyAPIStr = shared_constants.API_GATEWAY_URL + 'project/' + projectID + '/' + 'throughput/' + historyStr + '?';
 
     //need comma delimited string of worktypes
     if (workTypeStr !== '') historyAPIStr += '&workTypes=' + workTypeStr;
@@ -182,17 +172,17 @@ class Main extends React.Component {
           let Q1Date, Q2Date, Q3Date, Q4Date = "";
           //since there is 4 quarters in a fiscal year
           for(j=0;j<4;j++){
-            if(constants.DATETOQUARTER[j].quarter === "Q1"){
-              Q1Date = constants.DATETOQUARTER[j].date;
+            if(constants.DATE_TO_QUARTER[j].quarter === "Q1"){
+              Q1Date = constants.DATE_TO_QUARTER[j].date;
             }
-            else if(constants.DATETOQUARTER[j].quarter === "Q2"){
-              Q2Date = constants.DATETOQUARTER[j].date;
+            else if(constants.DATE_TO_QUARTER[j].quarter === "Q2"){
+              Q2Date = constants.DATE_TO_QUARTER[j].date;
             }
-            else if(constants.DATETOQUARTER[j].quarter === "Q3"){
-              Q3Date = constants.DATETOQUARTER[j].date;
+            else if(constants.DATE_TO_QUARTER[j].quarter === "Q3"){
+              Q3Date = constants.DATE_TO_QUARTER[j].date;
             }
-            else if(constants.DATETOQUARTER[j].quarter === "Q4"){
-              Q4Date = constants.DATETOQUARTER[j].date;
+            else if(constants.DATE_TO_QUARTER[j].quarter === "Q4"){
+              Q4Date = constants.DATE_TO_QUARTER[j].date;
             }
           }
 
@@ -277,7 +267,7 @@ class Main extends React.Component {
     let workTypeStr = this.props.data.selectedWorkTypes;
     let historyStr = 'leadtime/quarterly';
 
-    let historyAPIStr = this.apiGatewayType + 'project/' + projectID + '/' + historyStr + '?';
+    let historyAPIStr = shared_constants.API_GATEWAY_URL + 'project/' + projectID + '/' + historyStr + '?';
 
     //need comma delimited string of worktypes
     if (workTypeStr !== '') historyAPIStr += '&workTypes=' + workTypeStr;
@@ -369,7 +359,7 @@ class Main extends React.Component {
                     graph.style.display = "";
                   let promise = new Promise(function(resolve, reject) {
                     //set up ticks
-                    constants.LEADTIMEOPTIONS.hAxis.ticks = reference.dates;
+                    constants.LEAD_TIME_OPTIONS.hAxis.ticks = reference.dates;
                     resolve(true);
                     reference.setState({leadtimeRows: newChartData});
                     Main.loading(false);
@@ -472,12 +462,12 @@ class Main extends React.Component {
 
   //toggle to a fullscreen view without the menus
   toggleFullScreen() {
-    var charts = [];
+    let charts = [];
     charts.push(document.getElementById("throughputGraphContainer"));
     charts.push(document.getElementById("leadTimeGraphContainer"));
 
     for(i=0;i<charts.length;i++){
-      var currSize = charts[i].style.top;
+      let currSize = charts[i].style.top;
       //if not fullscreen
       if(currSize !== "0px"){
         let promise = new Promise(function(resolve, reject) {
@@ -485,8 +475,8 @@ class Main extends React.Component {
           resolve(true)
         });
         promise.then(function(response){
-          setTimeout(function(){ 
-            var select = document.getElementById("select");          
+          setTimeout(function(){
+            let select = document.getElementById("select");
             select.style.position = "fixed";
             select.style.top = 0;
             select.style.left = "40%";
@@ -499,8 +489,8 @@ class Main extends React.Component {
           resolve(true)
         });
         promise.then(function(response){
-          setTimeout(function(){ 
-            var select = document.getElementById("select");          
+          setTimeout(function(){
+            let select = document.getElementById("select");
             select.style.position = "";
             select.style.top = "";
             select.style.left = "";
@@ -525,14 +515,14 @@ class Main extends React.Component {
             <option value="leadtime" className="text-padding dropDownSelection"> ⏱ Quarterly Lead Times </option>
           </select>
           </div>
-          <div id="chartOverLay" style={{backgroundColor: "#FFF", zIndex:"10",position: "fixed", height:"100%", width:"100%"}}></div>
+          <div id="chartOverLay" style={{backgroundColor: "#FFF", zIndex: "10", position: "fixed", height: "100%", width: "100%"}}/>
           <div id="throughputGraphContainer" style={{position: "fixed", height:"100%", width:"100%", zIndex:"5"}}>
              <div style={{position: "fixed", height:"90%", width:"100%", justifyContent: 'center'}}>
               <Chart
                 chartType="LineChart"
-                columns={constants.THROUGHPUTCOLUMNS}  
+                columns={constants.THROUGHPUT_COLUMNS}
                 rows={this.state.throughputRows}
-                options={constants.THROUGHPUTOPTIONS}
+                options={constants.THROUGHPUT_OPTIONS}
                 width="100%"
                 height="90%"
                 legend_toggle
@@ -546,9 +536,9 @@ class Main extends React.Component {
             <div id="leadTimeGraphDiv" style={{position: "fixed", height:"100%", width:"100%", justifyContent: 'center'}}>
               <Chart
                 chartType="ScatterChart"
-                columns={constants.LEADTIMECOLUMNS}  
+                columns={constants.LEAD_TIME_COLUMNS}
                 rows={this.state.leadtimeRows}
-                options={constants.LEADTIMEOPTIONS}
+                options={constants.LEAD_TIME_OPTIONS}
                 width="100%"
                 height="80%"
                 chartEvents={this.chartEvents}

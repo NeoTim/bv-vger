@@ -17,7 +17,7 @@
         const VGER_GUIDE = "<PROJECT_HOME>/doc/external/vger_the_complete_guide.md";
 
         const JIRA_SUPPORT_PROJECT_URL = '';
-        const BOARD_ID_URL = 'JIRAURL?rapidView=';
+        const BOARD_ID_URL = 'JIRA_URL?rapidView=';
         const ADD_PROJECT_URL = "see external folder in gops-vger/docs";
         const TEAM_LIST_API_ENDPOINT = 'API ENDPOINT WITH LIST OF TEAM NAMES';
 

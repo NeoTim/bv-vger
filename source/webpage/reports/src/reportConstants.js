@@ -2,16 +2,18 @@
 //CONSTANTS
 //These are the fiscal quarter end dates for bazaarvoice that are used in quarterly reports.
 //If your company has different quarterly end dates, you can modify them here
-const QUARTERDATESORGANIZED = ["1/31", "4/30", "7/31", "10/31"];
+import {JIRA_HOST_URL} from "../../shared/constants";
+
+const QUARTER_DATES_ORGANIZED = ["1/31", "4/30", "7/31", "10/31"];
 
 //if arranged chronologically by quarter, optimizes loop that assigns it
-const DATETOQUARTER = [{date:"7/31", quarter:"Q1"}, {date:"10/31", quarter:"Q2"}, {date:"1/31", quarter:"Q3"}, {date:"4/30", quarter:"Q4"}];
+const DATE_TO_QUARTER = [{date:"7/31", quarter:"Q1"}, {date:"10/31", quarter:"Q2"}, {date:"1/31", quarter:"Q3"}, {date:"4/30", quarter:"Q4"}];
 
 //------END OF:  Q1,      Q2,     Q3,     Q4 --------------- //
 //quarterDates: ["7/31", "10/31", "1/31", "4/31"],
 // JUST FOR PURPOSES OF ILLUSTRATING WHEN FISCAL QUARTERS FALL
 
-const THROUGHPUTOPTIONS = {
+const THROUGHPUT_OPTIONS = {
   curveType: '',
   legend: { position: 'top' },
   series: {
@@ -49,7 +51,7 @@ const THROUGHPUTOPTIONS = {
   },
 };
 
-const THROUGHPUTCOLUMNS = [
+const THROUGHPUT_COLUMNS = [
   {
     type: 'string',
     label: 'Quarters',
@@ -76,7 +78,7 @@ const THROUGHPUTCOLUMNS = [
   }
 ];
 
-const LEADTIMEOPTIONS = {
+const LEAD_TIME_OPTIONS = {
   curveType: '',
   legend: 'none',
   series: {
@@ -128,7 +130,7 @@ const LEADTIMEOPTIONS = {
   },
 };
 
-const LEADTIMECOLUMNS = [
+const LEAD_TIME_COLUMNS = [
   {
     type: 'date',
     label: 'Days',
@@ -144,26 +146,17 @@ const LEADTIMECOLUMNS = [
   }     
 ];
 
-const JIRA_BOARD_URL = "JIRA_URL?rapidView=";
-const APIGATEWAYPROD = 'API GATEWAY INSTANCE PROD';
-const APIGATEWAYPRODURL ='S3 SITE URL PROD';
-const APIGATEWAYQA = 'API GATEWAY INSTANCE QA';
-const APIGATEWAYQAURL = 'S3 SITE URL QA';
-const JIRAURL = 'company_url/jira/';
+import * as shared_constants from '../../shared/constants.js';
 
 let constants = {
-  QUARTERDATESORGANIZED: QUARTERDATESORGANIZED,
-  DATETOQUARTER: DATETOQUARTER,
-  THROUGHPUTCOLUMNS: THROUGHPUTCOLUMNS,
-  THROUGHPUTOPTIONS: THROUGHPUTOPTIONS,
-  LEADTIMECOLUMNS: LEADTIMECOLUMNS,
-  LEADTIMEOPTIONS: LEADTIMEOPTIONS,
-  APIGATEWAYPROD: APIGATEWAYPROD,
-  JIRA_BOARD_URL: JIRA_BOARD_URL,
-  APIGATEWAYPRODURL: APIGATEWAYPRODURL,
-  APIGATEWAYQA: APIGATEWAYQA,
-  APIGATEWAYQAURL: APIGATEWAYQAURL,
-  JIRAURL: JIRAURL
+  QUARTER_DATES_ORGANIZED: QUARTER_DATES_ORGANIZED,
+  DATE_TO_QUARTER: DATE_TO_QUARTER,
+  THROUGHPUT_COLUMNS: THROUGHPUT_COLUMNS,
+  THROUGHPUT_OPTIONS: THROUGHPUT_OPTIONS,
+  LEAD_TIME_COLUMNS: LEAD_TIME_COLUMNS,
+  LEAD_TIME_OPTIONS: LEAD_TIME_OPTIONS,
+  JIRA_URL: shared_constants.JIRA_HOST_URL,
+  API_GATEWAY_URL: shared_constants.API_GATEWAY_URL,
 };
 
 //--------------------------------—--------------------------------—--------------------------------—//

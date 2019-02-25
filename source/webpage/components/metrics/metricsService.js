@@ -2,6 +2,8 @@
  * Service to handle API requests made from metricsController
  */
 
+import * as constants from "../../shared/constants.js"
+
 (function () {
     'use strict';
 
@@ -10,9 +12,9 @@
         .service('metricsDataService', metricsDataService);
 
     // Retrieves data for charts
-    metricsDataService.$inject = ['$http', 'routerConfig', '$rootScope'];
+    metricsDataService.$inject = ['$http', '$rootScope'];
 
-    function metricsDataService($http, routerConfig, $rootScope) {
+    function metricsDataService($http, $rootScope) {
         return {
             getWorkStates: getWorkStates,
             getBoardID: getBoardID,
@@ -32,7 +34,7 @@
         };
 
         function getWorkStates(selectedWorkTypes, selectedProjectId, days, dateSince, dateUntil) {
-            let workStatesAPIStr = routerConfig.apiGateway + 'project/' + selectedProjectId + '/' + 'workstates?';
+            let workStatesAPIStr = constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/' + 'workstates?';
             return $http({
                 method: 'GET',
                 url: encodeURI(workStatesAPIStr)
@@ -43,7 +45,7 @@
         function getBoardID(boardName) {
             return $http({
                 method: 'GET',
-                url: encodeURI(routerConfig.apiGateway + 'board/id/?boardName=' + boardName)
+                url: encodeURI(constants.API_GATEWAY_URL + '/board/id/?boardName=' + boardName)
             });
         }
 
@@ -51,13 +53,13 @@
         function getJiraIssueConfiguration(projectId) {
             return $http({
                 method: 'GET',
-                url: encodeURI(routerConfig.apiGateway + 'project/' + projectId + '/' + 'issues')
+                url: encodeURI(constants.API_GATEWAY_URL + '/project/' + projectId + '/issues')
             });
         }
 
         function getLeadTimeData(selectedWorkTypes, selectedProjectId, days, dateSince, dateUntil) {
             let workTypeStr = selectedWorkTypes.join();
-            let leadTimeAPIStr = routerConfig.apiGateway + 'project/' + selectedProjectId + '/' + 'leadtime?';
+            let leadTimeAPIStr = constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/leadtime?';
 
             if (workTypeStr !== '') leadTimeAPIStr += '&workTypes=' + workTypeStr;
             if (days) leadTimeAPIStr += '&days=' + days;
@@ -73,7 +75,7 @@
         function getThroughputStatisticsData(selectedWorkTypes, selectedProjectId, days, dateSince, dateUntil) {
             let workTypeStr = selectedWorkTypes.join();
             let statisticsStr = 'statistics';
-            let statisticsAPIStr = routerConfig.apiGateway + 'project/' + selectedProjectId + '/' + 'throughput/' + statisticsStr + '?';
+            let statisticsAPIStr = constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/throughput/' + statisticsStr + '?';
 
             if (workTypeStr !== '') statisticsAPIStr += '&workTypes=' + workTypeStr;
             if (days) statisticsAPIStr += '&days=' + days;
@@ -89,7 +91,7 @@
         function getThroughputHistoryData(selectedWorkTypes, selectedProjectId, days, dateSince, dateUntil) {
             let workTypeStr = selectedWorkTypes.join();
             let historyStr = 'history';
-            let historyAPIStr = routerConfig.apiGateway + 'project/' + selectedProjectId + '/' + 'throughput/' + historyStr + '?';
+            let historyAPIStr = constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/throughput/' + historyStr + '?';
 
             if (workTypeStr !== '') historyAPIStr += '&workTypes=' + workTypeStr;
             if (days) historyAPIStr += '&days=' + days;
@@ -103,7 +105,7 @@
         }
 
         function getThroughputGitRepoData(selectedWorkTypes, selectedProjectId, days, dateSince, dateUntil) {
-            let gitRepoAPIStr = routerConfig.apiGateway + 'project/' + selectedProjectId + '/' + 'repos?';
+            let gitRepoAPIStr = constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/repos?';
             return $http({
                 method: 'GET',
                 url: encodeURI(gitRepoAPIStr)
@@ -111,7 +113,7 @@
         }
 
         function getThroughputGitTagData(selectedWorkTypes, selectedProjectId, days, dateSince, dateUntil) {
-            let gitTagAPIStr = routerConfig.apiGateway + 'project/' + selectedProjectId + '/' + 'tags?';
+            let gitTagAPIStr = constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/tags?';
 
             if (days) gitTagAPIStr += '&days=' + days;
             if (dateSince) gitTagAPIStr += '&dateSince=' + dateSince;
@@ -125,7 +127,7 @@
 
         function getVelocityData(selectedWorkTypes, selectedProjectId, days, dateSince, dateUntil) {
             let workTypeStr = selectedWorkTypes.join();
-            let backlogHistoryAPIStr = routerConfig.apiGateway + 'project/' + selectedProjectId + '/' + 'backlog/?';
+            let backlogHistoryAPIStr = constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/backlog/?';
 
             if (workTypeStr !== '') backlogHistoryAPIStr += '&workTypes=' + workTypeStr;
             if (days) backlogHistoryAPIStr += '&days=' + days;
@@ -140,7 +142,7 @@
 
         function getPredictabilityData(selectedWorkTypes, selectedProjectId, days, dateSince, dateUntil) {
             let workTypeStr = selectedWorkTypes.join();
-            let predictabilityAPIStr = routerConfig.apiGateway + 'project/' + selectedProjectId + '/' + 'throughput/' + 'predictability?';
+            let predictabilityAPIStr = constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/throughput/predictability?';
 
             if (workTypeStr !== '') predictabilityAPIStr += '&workTypes=' + workTypeStr;
             if (days) predictabilityAPIStr += '&days=' + days;
@@ -155,7 +157,7 @@
 
         function getPRHistoryData(repoNameList, selectedProjectId, days, dateSince, dateUntil) {
             let historyStr = 'history';
-            let historyAPIStr = routerConfig.apiGateway + 'project/' + selectedProjectId + '/prs/' + 'throughput/' + historyStr + '?';
+            let historyAPIStr = constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/prs/throughput/' + historyStr + '?';
 
             if (days) historyAPIStr += '&days=' + days;
             if (dateSince) historyAPIStr += '&dateSince=' + dateSince;
@@ -170,7 +172,7 @@
 
         function getPRStatisticsData(repoNameList, selectedProjectId, days, dateSince, dateUntil) {
             let statisticsStr = 'statistics';
-            let statisticsAPIStr = routerConfig.apiGateway + 'project/' + selectedProjectId + '/prs/' + 'throughput/' + statisticsStr + '?';
+            let statisticsAPIStr = constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/prs/throughput/' + statisticsStr + '?';
 
             if (days) statisticsAPIStr += '&days=' + days;
             if (dateSince) statisticsAPIStr += '&dateSince=' + dateSince;
@@ -186,8 +188,7 @@
         function getPRPredictabilityData(repoNameList, selectedProjectId, days, dateSince, dateUntil) {
             let predictabilityStr = 'predictability';
             let predictabilityAPIStr =
-                routerConfig.apiGateway + 'project/' + selectedProjectId + '/prs/' +
-                'throughput/' + predictabilityStr + '?';
+                constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/prs/throughput/' + predictabilityStr + '?';
 
             if (days) predictabilityAPIStr += '&days=' + days;
             if (dateSince) predictabilityAPIStr += '&dateSince=' + dateSince;
@@ -203,7 +204,7 @@
         function getPRLeadtimeData(repoNameList, selectedProjectId, days, dateSince, dateUntil) {
             let leadtimeStr = 'leadtime';
             let leadtimeAPIStr =
-                routerConfig.apiGateway + 'project/' + selectedProjectId + '/prs/' + leadtimeStr + "?";
+                constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/prs/' + leadtimeStr + "?";
 
             if (days) leadtimeAPIStr += '&days=' + days;
             if (dateSince) leadtimeAPIStr += '&dateSince=' + dateSince;
@@ -219,7 +220,7 @@
         function getPRBacklogData(repoNameList, selectedProjectId, days, dateSince, dateUntil) {
             let backlogStr = 'backlog';
             let backlogAPIStr =
-                routerConfig.apiGateway + 'project/' + selectedProjectId + '/prs/' + backlogStr + "?";
+                constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/prs/' + backlogStr + "?";
 
             if (days) backlogAPIStr += '&days=' + days;
             if (dateSince) backlogAPIStr += '&dateSince=' + dateSince;
@@ -234,9 +235,9 @@
     }
 
     // Handles form input and retrieves info from AWS API gateway
-    metricsFilterService.$inject = ['$http', 'routerConfig'];
+    metricsFilterService.$inject = ['$http'];
 
-    function metricsFilterService($http, routerConfig) {
+    function metricsFilterService($http) {
         return {
             getTeams: getTeams,
             getAvailableTeams: getAvailableTeams,
@@ -249,7 +250,7 @@
         function getTeams() {
             return $http({
                 method: 'GET',
-                url: encodeURI(routerConfig.apiGateway + 'team/')
+                url: encodeURI(constants.API_GATEWAY_URL + '/team/')
             });
         }
 
@@ -265,16 +266,16 @@
         function getProjects(teamId) {
             return $http({
                 method: 'GET',
-                url: encodeURI(routerConfig.apiGateway + 'team/' + teamId + '/' + 'project/')
+                url: encodeURI(constants.API_GATEWAY_URL + '/team/' + teamId + '/' + 'project/')
             });
         }
 
         // Return list of worktypes
-        // lamda function: /source/statistics/projectWorkTypes.py
+        // lambda function: /source/statistics/projectWorkTypes.py
         function getWorkTypes(projectId) {
             return $http({
                 method: 'GET',
-                url: encodeURI(routerConfig.apiGateway + 'project/' + projectId + '/' + 'worktypes/')
+                url: encodeURI(constants.API_GATEWAY_URL + '/project/' + projectId + '/worktypes/')
             });
         }
     }

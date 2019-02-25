@@ -3,15 +3,17 @@
  * Create, update, retrieve configuration info from db
  */
 
+import * as constants from '../../shared/constants.js';
+
 (function () {
     'use strict';
 
     angular.module('vgerConfigurationsService', [])
         .service('configurationsService', configurationsService);
 
-    configurationsService.$inject = ['$http', 'routerConfig'];
+    configurationsService.$inject = ['$http'];
 
-    function configurationsService($http, routerConfig) {
+    function configurationsService($http) {
         return {
             getTeams: getTeams,
             getProjects: getProjects,
@@ -36,15 +38,15 @@
         function getTeams() {
             return $http({
                 method: 'GET',
-                url: encodeURI(routerConfig.apiGateway + 'team/')
+                url: encodeURI(constants.API_GATEWAY_URL + '/team/')
             });
         }
 
-        // Return list of projects belongning to the team
+        // Return list of projects belonging to the team
         function getProjects(teamId) {
             return $http({
                 method: 'GET',
-                url: encodeURI(routerConfig.apiGateway + 'team/' + teamId + '/' + 'project/')
+                url: encodeURI(constants.API_GATEWAY_URL + '/team/' + teamId + '/project/')
             });
         }
 
@@ -52,7 +54,7 @@
         function getJiraIssueConfiguration(projectId) {
             return $http({
                 method: 'GET',
-                url: encodeURI(routerConfig.apiGateway + 'project/' + projectId + '/' + 'issues')
+                url: encodeURI(constants.API_GATEWAY_URL + '/project/' + projectId + '/issues')
             });
         }
 
@@ -60,7 +62,7 @@
         function getJiraWorkTypesConfiguration(projectId) {
             return $http({
                 method: 'GET',
-                url: encodeURI(routerConfig.apiGateway + 'project/' + projectId + '/' + 'worktypes')
+                url: encodeURI(constants.API_GATEWAY_URL + '/project/' + projectId + '/worktypes')
             });
         }
 
@@ -68,7 +70,7 @@
         function getJiraWorkStatesConfiguration(projectId) {
             return $http({
                 method: 'GET',
-                url: encodeURI(routerConfig.apiGateway + 'project/' + projectId + '/' + 'workstates')
+                url: encodeURI(constants.API_GATEWAY_URL + '/project/' + projectId + '/workstates')
             });
         }
 
@@ -76,7 +78,7 @@
         function getBoardWorkStatesConfiguration(projectId) {
             return $http({
                 method: 'GET',
-                url: encodeURI(routerConfig.apiGateway + 'project/' + projectId + '/' + 'boardworkstates')
+                url: encodeURI(constants.API_GATEWAY_URL + '/project/' + projectId + '/boardworkstates')
             });
         }
 
@@ -84,7 +86,7 @@
         function getGitConfiguration(projectId) {
             return $http({
                 method: 'GET',
-                url: encodeURI(routerConfig.apiGateway + 'project/' + projectId + '/' + 'repos')
+                url: encodeURI(constants.API_GATEWAY_URL + '/project/' + projectId + '/repos')
             });
         }
 
@@ -92,15 +94,15 @@
         function getIssueFilter(jql) {
             return $http({
                 method: 'GET',
-                url: encodeURI(routerConfig.apiGateway + 'issues/filter?jql=' + jql)
+                url: encodeURI(constants.API_GATEWAY_URL + '/issues/filter?jql=' + jql)
             });
         }
 
         // Return latest JQL given JIRA board name
         function getBoardJQL(board_name) {
             return $http({
-                method: "GET",
-                url: encodeURI(routerConfig.apiGateway + 'board?boardName=' + board_name)
+                method: 'GET',
+                url: encodeURI(constants.API_GATEWAY_URL + '/board?boardName=' + board_name)
             });
         }
 
@@ -108,7 +110,7 @@
         function createTeam(teamName) {
             return $http({
                 method: 'POST',
-                url: encodeURI(routerConfig.apiGateway + 'team/'),
+                url: encodeURI(constants.API_GATEWAY_URL + '/team/'),
                 data: {
                     name: teamName
                 }
@@ -119,7 +121,7 @@
         function createProject(teamId, projectName, boardName, issueKeys, repoNames) {
             return $http({
                 method: 'POST',
-                url: encodeURI(routerConfig.apiGateway + 'team/' + teamId + '/' + 'project'),
+                url: encodeURI(constants.API_GATEWAY_URL + '/team/' + teamId + '/project'),
                 data: {
                     name: projectName,
                     issues: {
@@ -135,7 +137,7 @@
         function updateIssues(projectId, boardName, includeSubtasks, excludedIssueTypes, issueFilter, projectName) {
             return $http({
                 method: 'PUT',
-                url: encodeURI(routerConfig.apiGateway + 'project/' + projectId + '/' + 'issues'),
+                url: encodeURI(constants.API_GATEWAY_URL + '/project/' + projectId + '/issues'),
                 data: {
                     boardName: boardName,
                     includeSubtasks: includeSubtasks,
@@ -149,7 +151,7 @@
         function updateRepos(projectId, repos) {
             return $http({
                 method: 'PUT',
-                url: encodeURI(routerConfig.apiGateway + 'project/' + projectId + '/' + 'repos'),
+                url: encodeURI(constants.API_GATEWAY_URL + '/project/' + projectId + '/repos'),
                 data: repos
             });
         }
@@ -158,7 +160,7 @@
         function updateWorkTypes(projectId, workTypePostBody) {
             return $http({
                 method: 'PUT',
-                url: encodeURI(routerConfig.apiGateway + 'project/' + projectId + '/' + 'worktypes'),
+                url: encodeURI(constants.API_GATEWAY_URL + '/project/' + projectId + '/worktypes'),
                 data: workTypePostBody
             });
         }
@@ -167,14 +169,14 @@
         function updateWorkStates(projectId, workStatePostBody) {
             return $http({
                 method: 'PUT',
-                url: encodeURI(routerConfig.apiGateway + 'project/' + projectId + '/' + 'workstates'),
+                url: encodeURI(constants.API_GATEWAY_URL + '/project/' + projectId + '/workstates'),
                 data: workStatePostBody
             });
         }
 
         // Trigger ETL
         function projectETL(selectedProjectId, issue_type_etl) {
-            let APIStr = routerConfig.apiGateway + 'project/' + selectedProjectId + '/etl';
+            let APIStr = constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/etl';
             if (issue_type_etl) {
                 APIStr += "?issuetype=true";
             }
@@ -186,9 +188,9 @@
 
         // Get ETL status for specific project
         function etlStatus(selectedProjectId) {
-            let APIStr = routerConfig.apiGateway + "project/" + selectedProjectId + "/etl/status";
+            let APIStr = constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/etl/status';
             return $http({
-                method: "GET",
+                method: 'GET',
                 url: encodeURI(APIStr)
             });
         }

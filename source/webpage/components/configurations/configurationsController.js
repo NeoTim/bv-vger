@@ -2,6 +2,8 @@
  *  Controller for the editWorkStates.html, editWorkTypes.html and editProject.html
  */
 
+import Main from "../../reports/src/main";
+
 (function(){
     'use strict';
 
@@ -43,88 +45,85 @@
     
     configurationsController.$inject = ['$scope', '$rootScope', '$window', '$location', '$mdToast', '$sanitize', 'configurationsService'];
     function configurationsController($scope, $rootScope, $window, $location, $mdToast, $sanitize, configurationsService) {
-        var vm = this; // view-model
-        var promiseTeam = configurationsService.getTeams();
-        
+        let view_model = this;
+
         // UI elements
-        vm.teams = [];
-        vm.projects = [];
-        vm.selectedTeam = {};
-        vm.selectedProject = {};
-        vm.getConfiguration = getConfiguration;
-        vm.onDrop = onDrop;
-        vm.onDropStates = onDropStates;
-        vm.createNewState = createNewState;
-        vm.createNewType = createNewType;
-        vm.cancelNewState = cancelNewState;
-        vm.cancelNewType = cancelNewType;
-        vm.saveNewState = saveNewState;
-        vm.saveNewType = saveNewType;
-        vm.deleteState = deleteState;
-        vm.deleteType = deleteType;
-        vm.projectETL = projectETL;
-        vm.issueTypeETL = issueTypeETL;
-        vm.disableETL = false;
-        vm.creatingNewState = false;
-        vm.creatingNewType = false;
+        view_model.teams = [];
+        view_model.projects = [];
+        view_model.selectedTeam = {};
+        view_model.selectedProject = {};
+        view_model.getConfiguration = getConfiguration;
+        view_model.onDrop = onDrop;
+        view_model.onDropStates = onDropStates;
+        view_model.createNewState = createNewState;
+        view_model.createNewType = createNewType;
+        view_model.cancelNewState = cancelNewState;
+        view_model.cancelNewType = cancelNewType;
+        view_model.saveNewState = saveNewState;
+        view_model.saveNewType = saveNewType;
+        view_model.deleteState = deleteState;
+        view_model.deleteType = deleteType;
+        view_model.projectETL = projectETL;
+        view_model.issueTypeETL = issueTypeETL;
+        view_model.disableETL = false;
+        view_model.creatingNewState = false;
+        view_model.creatingNewType = false;
         
-        vm.selectLeadTime = selectLeadTime;
-        vm.startLeadTime;
-        vm.endLeadTime;
-        vm.selectedStartLeadTime = false;
-        vm.selectedEndLeadTime = false;
-        vm.newStateError = false;
-        vm.newTypeError = false;
-        vm.currentStart;
-        vm.currentEnd;
+        view_model.selectLeadTime = selectLeadTime;
+        view_model.startLeadTime;
+        view_model.endLeadTime;
+        view_model.selectedStartLeadTime = false;
+        view_model.selectedEndLeadTime = false;
+        view_model.newStateError = false;
+        view_model.newTypeError = false;
+        view_model.currentStart;
+        view_model.currentEnd;
 
         // Configuration data variable
-        vm.jiraConfigData;
-        vm.jiraIssueConfigData;
-        vm.jiraWorkTypes = [];
-        vm.jiraWorkStates = [];
-        vm.issueFilter;
-        vm.includeSubtasks = false;
-        vm.excludedIssueTypes = [];
-        vm.repos = [];
-        vm.errorMessage;
-        vm.showDeleteButton = false;
+        view_model.jiraConfigData;
+        view_model.jiraIssueConfigData;
+        view_model.jiraWorkTypes = [];
+        view_model.jiraWorkStates = [];
+        view_model.issueFilter;
+        view_model.includeSubtasks = false;
+        view_model.excludedIssueTypes = [];
+        view_model.repos = [];
+        view_model.errorMessage;
+        view_model.showDeleteButton = false;
         
-        vm.updateProjectSettings = updateProjectSettings;
-        vm.updateWorkTypes = updateWorkTypes;
-        vm.updateWorkStates = updateWorkStates;
-        vm.getIssueFilter = getIssueFilter;
-        vm.resetToBoard = resetToBoard;
-        vm.resetJQLToBoard = resetJQLToBoard;
+        view_model.updateProjectSettings = updateProjectSettings;
+        view_model.updateWorkTypes = updateWorkTypes;
+        view_model.updateWorkStates = updateWorkStates;
+        view_model.getIssueFilter = getIssueFilter;
+        view_model.resetToBoard = resetToBoard;
+        view_model.resetJQLToBoard = resetJQLToBoard;
 
-        
-        var issueSuccess = false;
         Main.loading = false;
         getSessionScope();
         getConfiguration();
 
         function getSessionScope() {
             // Check bookmarked query params
-            var queryParams = $location.search();
-            vm.selectedTeam.id = queryParams['teamId'];
-            vm.selectedProject.id = queryParams['projectId'];
-            vm.selectedTeam.name = queryParams['teamName'];
-            vm.selectedProject.name = queryParams['projectName'];
+            let queryParams = $location.search();
+            view_model.selectedTeam.id = queryParams['teamId'];
+            view_model.selectedProject.id = queryParams['projectId'];
+            view_model.selectedTeam.name = queryParams['teamName'];
+            view_model.selectedProject.name = queryParams['projectName'];
 
-            if (vm.selectedProject.id && !$window.sessionStorage.selectedProjectId) {
-                $rootScope.selectedTeamId = vm.selectedTeam.id;
-                $rootScope.selectedTeamName = vm.selectedTeam.name;
-                $window.sessionStorage.selectedTeamId = vm.selectedTeam.id;
-                $window.sessionStorage.selectedTeamName = vm.selectedTeam.name;
-                $rootScope.selectedProjectId = vm.selectedProject.id;
-                $rootScope.selectedProjectName = vm.selectedProject.name;
-                $window.sessionStorage.selectedProjectId = vm.selectedProject.id;
-                $window.sessionStorage.selectedProjectName = vm.selectedProject.name;
-            } else if (!vm.selectedProject.id && $window.sessionStorage.selectedProjectId) {
-                vm.selectedTeam.id = $window.sessionStorage.selectedTeamId;
-                vm.selectedProject.id = $window.sessionStorage.selectedProjectId;
-                vm.selectedTeam.name = $window.sessionStorage.selectedTeamName;
-                vm.selectedProject.name = $window.sessionStorage.selectedProjectName;
+            if (view_model.selectedProject.id && !$window.sessionStorage.selectedProjectId) {
+                $rootScope.selectedTeamId = view_model.selectedTeam.id;
+                $rootScope.selectedTeamName = view_model.selectedTeam.name;
+                $window.sessionStorage.selectedTeamId = view_model.selectedTeam.id;
+                $window.sessionStorage.selectedTeamName = view_model.selectedTeam.name;
+                $rootScope.selectedProjectId = view_model.selectedProject.id;
+                $rootScope.selectedProjectName = view_model.selectedProject.name;
+                $window.sessionStorage.selectedProjectId = view_model.selectedProject.id;
+                $window.sessionStorage.selectedProjectName = view_model.selectedProject.name;
+            } else if (!view_model.selectedProject.id && $window.sessionStorage.selectedProjectId) {
+                view_model.selectedTeam.id = $window.sessionStorage.selectedTeamId;
+                view_model.selectedProject.id = $window.sessionStorage.selectedProjectId;
+                view_model.selectedTeam.name = $window.sessionStorage.selectedTeamName;
+                view_model.selectedProject.name = $window.sessionStorage.selectedProjectName;
             }
         }
 
@@ -139,25 +138,21 @@
         }
 
         function getIssueFilter(jql) {
-            var promiseIssueFilter = configurationsService.getIssueFilter(jql);
+            let promiseIssueFilter = configurationsService.getIssueFilter(jql);
             promiseIssueFilter.then(function(response) {
-                var issueFilterData = response['data'];
-                var dateFieldIndex = issueFilterData['dateFieldIndex'];
-                var issueTypeFieldIndex = issueFilterData['issueTypeFieldIndex'];
-                vm.issueFilter = issueFilterData['filteredJQL'];
+                let issueFilterData = response['data'];
+                let dateFieldIndex = issueFilterData['dateFieldIndex'];
+                let issueTypeFieldIndex = issueFilterData['issueTypeFieldIndex'];
+                view_model.issueFilter = issueFilterData['filteredJQL'];
 
-                var warningIndex = [];
+                let warningIndex = [];
                 for (var i in dateFieldIndex) {
                     warningIndex.push([dateFieldIndex[i], 'date']);
                 }
                 for (var i in issueTypeFieldIndex) {
                     warningIndex.push([issueTypeFieldIndex[i], 'issueType']);
                 }
-                if (dateFieldIndex.length > 0 || issueTypeFieldIndex.length > 0) {
-                    vm.showWarning = true;
-                } else {
-                    vm.showWarning = false;
-                }
+                view_model.showWarning = dateFieldIndex.length > 0 || issueTypeFieldIndex.length > 0;
 
                 // order by smallest to greatest starting index
                 warningIndex.sort(function(a,b){return a[0][0] > b[0][0]});
@@ -172,67 +167,67 @@
                 };
 
                 // highlights the query that should be removed (rendered as HTML using ngSanitize)
-                var openSpanDateField = '<span style="background-color: #ffc9c9">';
-                var openSpanIssueTypeField = '<span style="background-color: #F7DC6F">'
-                var closeSpan = '</span>';
-                var index = 0;
-                vm.issueFilterHTML = vm.issueFilter;
+                let openSpanDateField = '<span style="background-color: #ffc9c9">';
+                let openSpanIssueTypeField = '<span style="background-color: #F7DC6F">';
+                let closeSpan = '</span>';
+                let index = 0;
+                view_model.issueFilterHTML = view_model.issueFilter;
                 
                 // finding beginning and ending of the string indices
                 for (var i in warningIndex) {
-                    if (warningIndex[i][1] == 'date') {
-                        vm.issueFilterHTML = vm.issueFilterHTML.insert(index + warningIndex[i][0][0], openSpanDateField);
+                    if (warningIndex[i][1] === 'date') {
+                        view_model.issueFilterHTML = view_model.issueFilterHTML.insert(index + warningIndex[i][0][0], openSpanDateField);
                         index += openSpanDateField.length;
                     }
-                    else if (warningIndex[i][1] == 'issueType'){
-                        vm.issueFilterHTML = vm.issueFilterHTML.insert(index + warningIndex[i][0][0], openSpanIssueTypeField);
+                    else if (warningIndex[i][1] === 'issueType'){
+                        view_model.issueFilterHTML = view_model.issueFilterHTML.insert(index + warningIndex[i][0][0], openSpanIssueTypeField);
                         index += openSpanIssueTypeField.length;
                     }
-                    vm.issueFilterHTML = vm.issueFilterHTML.insert(index + warningIndex[i][0][1], closeSpan);
+                    view_model.issueFilterHTML = view_model.issueFilterHTML.insert(index + warningIndex[i][0][1], closeSpan);
                     index += closeSpan.length;
                 }
                 
             }).catch(function(errorResponse) {
                 console.log('promiseIssueFilter failed');
-                vm.errorMessage = errorResponse;
+                view_model.errorMessage = errorResponse;
             });
         }
 
         // Fetch jira issue configuration
         function getJiraIssueConfiguration() {
-            var promiseJiraIssueConfiguration = configurationsService.getJiraIssueConfiguration(vm.selectedProject.id);
+            let promiseJiraIssueConfiguration = configurationsService.getJiraIssueConfiguration(view_model.selectedProject.id);
             promiseJiraIssueConfiguration.then(function(response) {
-                vm.jiraIssueConfigData = response['data'];
-                vm.boardName = vm.jiraIssueConfigData['boardName'];
-                vm.projectName = vm.jiraIssueConfigData['name'];
-                vm.includeSubtasks = vm.jiraIssueConfigData['includeSubtasks'];
-                if (vm.jiraIssueConfigData['excludedIssueTypes'] != "") {
-                    vm.excludedIssueTypes = vm.jiraIssueConfigData['excludedIssueTypes'].split(',');
+                view_model.jiraIssueConfigData = response['data'];
+                view_model.boardName = view_model.jiraIssueConfigData['boardName'];
+                view_model.projectName = view_model.jiraIssueConfigData['name'];
+                view_model.includeSubtasks = view_model.jiraIssueConfigData['includeSubtasks'];
+                if (view_model.jiraIssueConfigData['excludedIssueTypes'] !== "") {
+                    view_model.excludedIssueTypes = view_model.jiraIssueConfigData['excludedIssueTypes'].split(',');
                 } 
                 else {
-                    vm.excludedIssueTypes = [];
+                    view_model.excludedIssueTypes = [];
                 }
-                vm.getIssueFilter(vm.jiraIssueConfigData['issueFilter']);
+                view_model.getIssueFilter(view_model.jiraIssueConfigData['issueFilter']);
                 
             }).catch(function(errorResponse) {
                 console.log('promiseJiraIssueConfiguration failed');
-                vm.errorMessage = errorResponse;
+                view_model.errorMessage = errorResponse;
             });
         }
 
         // Fetch list of jira issue types & work types 
         function getJiraWorkTypesConfiguration() {
-            var promiseJiraWorkTypesConfiguration = configurationsService.getJiraWorkTypesConfiguration(vm.selectedProject.id);
+            let promiseJiraWorkTypesConfiguration = configurationsService.getJiraWorkTypesConfiguration(view_model.selectedProject.id);
             promiseJiraWorkTypesConfiguration.then(function(response) {
-                vm.jiraWorkTypes = response['data'];
-                var temp = [];
-                for (var i in vm.jiraWorkTypes) {
-                    var workType = {};
+                view_model.jiraWorkTypes = response['data'];
+                let temp = [];
+                for (var i in view_model.jiraWorkTypes) {
+                    let workType = {};
                     workType['workTypeName'] = i;
                     workType['issueTypes'] = [];
-                    for (var j in vm.jiraWorkTypes[i]) {
-                        var issueType = {};
-                        issueType['label'] = vm.jiraWorkTypes[i][j];
+                    for (var j in view_model.jiraWorkTypes[i]) {
+                        let issueType = {};
+                        issueType['label'] = view_model.jiraWorkTypes[i][j];
                         issueType['selected'] = false;
                         workType['issueTypes'].push(issueType);
                     }
@@ -240,63 +235,59 @@
                 }
                 // Sort alphanumerically
                 temp = sortByKey(temp, 'workTypeName');
-                vm.jiraWorkTypes = temp;
+                view_model.jiraWorkTypes = temp;
             }).catch(function(errorResponse) {
                 console.log('promiseJiraWorkTypesConfiguration failed');
-                vm.errorMessage = errorResponse;
+                view_model.errorMessage = errorResponse;
             });
         }
         
         // Fetch list of all jira ticket status and its work states
         function getJiraWorkStatesConfiguration() {
-            var promiseJiraWorkStatesConfiguration = configurationsService.getJiraWorkStatesConfiguration(vm.selectedProject.id);
+            var promiseJiraWorkStatesConfiguration = configurationsService.getJiraWorkStatesConfiguration(view_model.selectedProject.id);
             promiseJiraWorkStatesConfiguration.then(function(response) {
-                vm.defaultLeadTimeEndState = response['data']['defaultLeadTimeEndState']; 
-                vm.defaultLeadTimeStartState = response['data']['defaultLeadTimeStartState'];
-                vm.jiraWorkStates = response['data']['workStates'];
+                view_model.defaultLeadTimeEndState = response['data']['defaultLeadTimeEndState'];
+                view_model.defaultLeadTimeStartState = response['data']['defaultLeadTimeStartState'];
+                view_model.jiraWorkStates = response['data']['workStates'];
                 // Find the index of default start/end lead time
-                for (var i in vm.jiraWorkStates) {
-                    if (vm.jiraWorkStates[i]['name'] == vm.defaultLeadTimeStartState) {
+                for (var i in view_model.jiraWorkStates) {
+                    if (view_model.jiraWorkStates[i]['name'] === view_model.defaultLeadTimeStartState) {
                         var start = Number(i);
-                        vm.currentStart = start;
-                    } else if (vm.jiraWorkStates[i]['name'] == vm.defaultLeadTimeEndState) {
+                        view_model.currentStart = start;
+                    } else if (view_model.jiraWorkStates[i]['name'] === view_model.defaultLeadTimeEndState) {
                         var end = Number(i) - 1;
-                        vm.currentEnd = end;
+                        view_model.currentEnd = end;
                     }
                     
                     // Give temporary index
-                    vm.jiraWorkStates[i]['index'] = Number(i);
+                    view_model.jiraWorkStates[i]['index'] = Number(i);
 
                     // Find status that belongs to the state
-                    for (var status in vm.jiraWorkStates[i]['status']) {
-                        var label = vm.jiraWorkStates[i]['status'][status];
-                        vm.jiraWorkStates[i]['status'][status] = {
+                    for (let status in view_model.jiraWorkStates[i]['status']) {
+                        let label = view_model.jiraWorkStates[i]['status'][status];
+                        view_model.jiraWorkStates[i]['status'][status] = {
                             'label': label,
                             'selected': false,
                         }
                     }
                 }
                 
-                for (var i in vm.jiraWorkStates) {
-                    if (i >= start && i <=end) {
-                        vm.jiraWorkStates[i]['selected'] = true;
-                    } else {
-                        vm.jiraWorkStates[i]['selected'] = false;
-                    }
+                for (var i in view_model.jiraWorkStates) {
+                    view_model.jiraWorkStates[i]['selected'] = i >= start && i <= end;
                 }
             }).catch(function(errorResponse) {
-                vm.errorMessage = errorResponse;
+                view_model.errorMessage = errorResponse;
             });
         }
 
         // Fetch list of git repositories
         function getGitConfiguration() {
-            var promiseProjectRepos = configurationsService.getGitConfiguration(vm.selectedProject.id);
+            let promiseProjectRepos = configurationsService.getGitConfiguration(view_model.selectedProject.id);
             promiseProjectRepos.then(function(response) {
-                vm.repos = response['data'];
+                view_model.repos = response['data'];
             }).catch(function(errorResponse) {
                 console.log('getGitConfiguration failed');
-                vm.errorMessage = errorResponse;
+                view_model.errorMessage = errorResponse;
             });
         }
 
@@ -309,54 +300,54 @@
             targetList.splice(targetIndex, 0, srcList[srcIndex]);
             // Remove the item from the source, possibly correcting the index first.
             // We must do this immediately, otherwise ng-repeat complains about duplicates.
-            if (srcList == targetList && targetIndex <= srcIndex) srcIndex++;
+            if (srcList === targetList && targetIndex <= srcIndex) srcIndex++;
             srcList.splice(srcIndex, 1);
             // By returning true from dnd-drop we signalize we already inserted the item.
             return true;
-        };
-        
+        }
+
         function onDropStates (srcList, srcIndex, targetList, targetIndex) {
             // Copy the item from source to target.
             targetList.splice(targetIndex, 0, srcList[srcIndex]);
             // Remove the item from the source, possibly correcting the index first.
             // We must do this immediately, otherwise ng-repeat complains about duplicates.
-            if (srcList == targetList && targetIndex <= srcIndex) srcIndex++;
+            if (srcList === targetList && targetIndex <= srcIndex) srcIndex++;
             srcList.splice(srcIndex, 1);
             // By returning true from dnd-drop we signalize we already inserted the item.
 
             // Fix ordering
-            // vm.jiraWorkStates[targetIndex].index = targetIndex;
+            // view_model.jiraWorkStates[targetIndex].index = targetIndex;
             
             if(srcIndex > targetIndex) {
                 for (var i=targetIndex; i< srcIndex; i++) {
-                    vm.jiraWorkStates[i].index = i;
+                    view_model.jiraWorkStates[i].index = i;
                 }
             } else {
                 for (var i=srcIndex; i< targetIndex; i++) {
-                    vm.jiraWorkStates[i].index = i;
+                    view_model.jiraWorkStates[i].index = i;
                 }
             }
             // Fix currentStart and currentEnd
-            for (var j=0; j<vm.jiraWorkStates.length; j++) {
-                if (vm.jiraWorkStates[j].selected) {
-                    if (j < vm.currentStart) {
-                        vm.currentStart = j;
-                    } else if (j > vm.currentEnd) {
-                        vm.currentEnd = j;
+            for (var j=0; j<view_model.jiraWorkStates.length; j++) {
+                if (view_model.jiraWorkStates[j].selected) {
+                    if (j < view_model.currentStart) {
+                        view_model.currentStart = j;
+                    } else if (j > view_model.currentEnd) {
+                        view_model.currentEnd = j;
                     }
                 }
             }
-            for (var j=vm.currentStart; j<=vm.currentEnd; j++) {
-                vm.jiraWorkStates[j].selected = true;
+            for (var j=view_model.currentStart; j<=view_model.currentEnd; j++) {
+                view_model.jiraWorkStates[j].selected = true;
             }
 
             return true;
-        };
+        }
 
         function sortByKey(array, key) {
             return array.sort(function(a, b) {
-                var x = a[key];
-                var y = b[key];
+                let x = a[key];
+                let y = b[key];
                 // Format to lower case
                 if (typeof x == "string") {
                     x = x.toLowerCase();
@@ -376,41 +367,41 @@
         }
         
         function selectLeadTime(state) {
-            if (vm.currentEnd == vm.currentStart) {
+            if (view_model.currentEnd === view_model.currentStart) {
                 state.selected = true;
             }
              
             if (state.selected) {
                 // Reevaluate start/end leadtime when card is selected into to leadtime 
-                if (state.index < vm.currentStart) {
-                    vm.currentStart =  state.index;
-                } else if (state.index > vm.currentEnd) {
-                    vm.currentEnd = state.index;
+                if (state.index < view_model.currentStart) {
+                    view_model.currentStart =  state.index;
+                } else if (state.index > view_model.currentEnd) {
+                    view_model.currentEnd = state.index;
                 }
                 
                 // fill up gaps
-                if (vm.currentStart < vm.currentEnd) {
-                    for (var i=vm.currentStart; i<=vm.currentEnd; i++) {
-                        vm.jiraWorkStates[i].selected = true;
+                if (view_model.currentStart < view_model.currentEnd) {
+                    for (var i=view_model.currentStart; i<=view_model.currentEnd; i++) {
+                        view_model.jiraWorkStates[i].selected = true;
                     }
-                } else if (vm.currentStart > vm.currentEnd) {
-                    for (var i=vm.currentEnd; i<=vm.currentStart; i++) {
-                        vm.jiraWorkStates[i].selected = true;
+                } else if (view_model.currentStart > view_model.currentEnd) {
+                    for (var i=view_model.currentEnd; i<=view_model.currentStart; i++) {
+                        view_model.jiraWorkStates[i].selected = true;
                     }
                 }
             } else {
                 // Reevaluate start/end leadtime when card is unselected from leadtime
-                if (state.index == vm.currentStart) {
-                    vm.currentStart += 1;
-                } else if (state.index == vm.currentEnd) {
-                    vm.currentEnd -= 1;
+                if (state.index === view_model.currentStart) {
+                    view_model.currentStart += 1;
+                } else if (state.index === view_model.currentEnd) {
+                    view_model.currentEnd -= 1;
                 }
             }
 
         }
         
         function warningToast(message) {
-            var el = angular.element(document.querySelector('#toastContainer'));
+            let el = angular.element(document.querySelector('#toastContainer'));
             $mdToast.show(
                 $mdToast.simple()
                     .textContent(message)
@@ -424,107 +415,107 @@
         }
         
         function createNewState() {
-            vm.creatingNewState = true;
+            view_model.creatingNewState = true;
         }
         
         function createNewType() {
-            vm.creatingNewType = true;
+            view_model.creatingNewType = true;
         }
         
         function cancelNewState() {
-            vm.creatingNewState = false;
+            view_model.creatingNewState = false;
         }
         
         function cancelNewType() {
-            vm.creatingNewType = false;
+            view_model.creatingNewType = false;
         }
         
         function saveNewState() {
-            vm.newStateError = false;
+            view_model.newStateError = false;
             
             // Check that state name doesn't already exists
-            for (var i in vm.jiraWorkStates) {
-                if (vm.jiraWorkStates[i]['name'].toLowerCase() == vm.newStateName.toLowerCase()) {
+            for (var i in view_model.jiraWorkStates) {
+                if (view_model.jiraWorkStates[i]['name'].toLowerCase() === view_model.newStateName.toLowerCase()) {
                     warningToast('State name already exists');
-                    vm.newStateError = true;
+                    view_model.newStateError = true;
                 }
             }
             
-            if (!vm.newStateError) {
-                vm.creatingNewState = false;
+            if (!view_model.newStateError) {
+                view_model.creatingNewState = false;
                 
                 // move all other elements 
-                for (var i in vm.jiraWorkStates) {
-                    vm.jiraWorkStates[i]['index'] += 1;
+                for (var i in view_model.jiraWorkStates) {
+                    view_model.jiraWorkStates[i]['index'] += 1;
                 }
                 
                 // create new state
-                var newState = {
+                let newState = {
                     'status': [],
-                    'name': vm.newStateName,
+                    'name': view_model.newStateName,
                     'index': 0,
                     'selected': false
-                }
-                vm.jiraWorkStates.unshift(newState); // push new state at the start of array
-                vm.currentEnd += 1;
-                vm.currentStart += 1;
+                };
+                view_model.jiraWorkStates.unshift(newState); // push new state at the start of array
+                view_model.currentEnd += 1;
+                view_model.currentStart += 1;
                 
                 // clear newStateName
-                vm.newStateName = '';
+                view_model.newStateName = '';
             }
         }
 
         function saveNewType() {
-            vm.newTypeError = false;
+            view_model.newTypeError = false;
             
             // Check that type name doesn't already exists
-            for (var i in vm.jiraWorkTypes) {
-                if (vm.jiraWorkTypes[i]['workTypeName'].toLowerCase() == vm.newTypeName.toLowerCase()) {
+            for (var i in view_model.jiraWorkTypes) {
+                if (view_model.jiraWorkTypes[i]['workTypeName'].toLowerCase() === view_model.newTypeName.toLowerCase()) {
                     warningToast('Type name already exists');
-                    vm.newTypeError = true;
+                    view_model.newTypeError = true;
                 }
             }
 
-            if (!vm.newTypeError) {
-                vm.creatingNewType = false;
+            if (!view_model.newTypeError) {
+                view_model.creatingNewType = false;
                 // create new type
-                var newType = {
-                    'workTypeName': vm.newTypeName,
+                let newType = {
+                    'workTypeName': view_model.newTypeName,
                     'issueTypes': []
-                }
-                vm.jiraWorkTypes.unshift(newType); // push new state at the start of array
+                };
+                view_model.jiraWorkTypes.unshift(newType); // push new state at the start of array
 
                 // clear newStateName
-                vm.newTypeName = '';
-                sortByKey(vm.jiraWorkTypes, 'workTypeName');
+                view_model.newTypeName = '';
+                sortByKey(view_model.jiraWorkTypes, 'workTypeName');
             }
         }
         
         function deleteState($event, state) {
-            if (state.index >= vm.currentStart && state.index <= vm.currentEnd) {
-                vm.currentEnd--;
+            if (state.index >= view_model.currentStart && state.index <= view_model.currentEnd) {
+                view_model.currentEnd--;
             }
 
             $event.stopPropagation(); // prevents clicking delete button from propagating to card selection event
-            for (var i=0; i < vm.jiraWorkStates.length; i++) {
-                var obj = vm.jiraWorkStates[i];
-                if (state.name == obj['name']) {
-                    vm.jiraWorkStates.splice(i, 1);
+            for (var i=0; i < view_model.jiraWorkStates.length; i++) {
+                var obj = view_model.jiraWorkStates[i];
+                if (state.name === obj['name']) {
+                    view_model.jiraWorkStates.splice(i, 1);
                     i--;
                 }
             }
             // iterate through jiraworkstate again and reevaluate order
-            for (var i=0; i<vm.jiraWorkStates.length; i++) {
-                vm.jiraWorkStates[i].index = i;
+            for (var i=0; i<view_model.jiraWorkStates.length; i++) {
+                view_model.jiraWorkStates[i].index = i;
             }
             
         }
         
         function deleteType(type) {
-            for (var i=0; i < vm.jiraWorkTypes.length; i++) {
-                var obj = vm.jiraWorkTypes[i];
-                if (type.workTypeName == obj['workTypeName']) {
-                    vm.jiraWorkTypes.splice(i, 1);
+            for (var i=0; i < view_model.jiraWorkTypes.length; i++) {
+                let obj = view_model.jiraWorkTypes[i];
+                if (type.workTypeName === obj['workTypeName']) {
+                    view_model.jiraWorkTypes.splice(i, 1);
                     i--;
                 }
             }
@@ -540,18 +531,17 @@
             //                                  --> Except For: Epic     first letter uppercase
             // value validation is done on backend/lambda
             
-            if(vm.selectedProject) {
+            if(view_model.selectedProject) {
                 var promiseUpdateIssues = configurationsService.updateIssues(
-                    vm.selectedProject.id,
-                    vm.boardName,
-                    vm.includeSubtasks,
-                    vm.excludedIssueTypes.join(','),
-                    vm.issueFilter,
-                    vm.selectedProject.name
+                    view_model.selectedProject.id,
+                    view_model.boardName,
+                    view_model.includeSubtasks,
+                    view_model.excludedIssueTypes.join(','),
+                    view_model.issueFilter,
+                    view_model.selectedProject.name
                 );
                 promiseUpdateIssues.then(function(response) {
-                    if (response['status'] == '200') {
-                        // warningToast('Saved!');
+                    if (response['status'] === '200') {
                         updateRepos();
                     }
                 }).catch(function(errorResponse){
@@ -564,15 +554,15 @@
         }
         
         function updateRepos() {
-            if(vm.selectedProject) {
-                var promiseUpdateRepos = configurationsService.updateRepos(vm.selectedProject.id, vm.repos);
+            if(view_model.selectedProject) {
+                let promiseUpdateRepos = configurationsService.updateRepos(view_model.selectedProject.id, view_model.repos);
                 promiseUpdateRepos.then(function(response) {
                     warningToast('Saved');
                     setTimeout(function() {
-                        $rootScope.selectedProjectId = vm.selectedProject.id;
-                        $rootScope.selectedProjectName = vm.selectedProject.name;
-                        $window.sessionStorage.selectedProjectId = vm.selectedProject.id;
-                        $window.sessionStorage.selectedProjectName = vm.selectedProject.name;
+                        $rootScope.selectedProjectId = view_model.selectedProject.id;
+                        $rootScope.selectedProjectName = view_model.selectedProject.name;
+                        $window.sessionStorage.selectedProjectId = view_model.selectedProject.id;
+                        $window.sessionStorage.selectedProjectName = view_model.selectedProject.name;
                         window.location.href = "#!/metrics";
                         window.location.reload()
                     }, 2000)
@@ -585,19 +575,19 @@
         
         function updateWorkTypes() {
             Main.loading = true;
-            if(vm.selectedProject) {
+            if(view_model.selectedProject) {
                 // Build POST data body
-                var workTypePostBody = {};
-                for (var i in vm.jiraWorkTypes) {
+                let workTypePostBody = {};
+                for (var i in view_model.jiraWorkTypes) {
                     var issueList = [];
-                    for (var j in vm.jiraWorkTypes[i].issueTypes) {
-                        issueList.push(vm.jiraWorkTypes[i].issueTypes[j].label);
+                    for (var j in view_model.jiraWorkTypes[i].issueTypes) {
+                        issueList.push(view_model.jiraWorkTypes[i].issueTypes[j].label);
                     }
-                    workTypePostBody[vm.jiraWorkTypes[i].workTypeName] = issueList;
+                    workTypePostBody[view_model.jiraWorkTypes[i].workTypeName] = issueList;
                 }
-                var promiseUpdateWorkTypes = configurationsService.updateWorkTypes(vm.selectedProject.id, workTypePostBody);
+                let promiseUpdateWorkTypes = configurationsService.updateWorkTypes(view_model.selectedProject.id, workTypePostBody);
                 promiseUpdateWorkTypes.then(function(response) {
-                    if (response['status'] == '200') {
+                    if (response['status'] === '200') {
                         warningToast('Saved!');
                     }
                     
@@ -612,41 +602,37 @@
         
         function resetToBoard() {
             Main.loading = true;
-            var promiseBoardWorkStatesConfiguration = configurationsService.getBoardWorkStatesConfiguration(vm.selectedProject.id);
+            var promiseBoardWorkStatesConfiguration = configurationsService.getBoardWorkStatesConfiguration(view_model.selectedProject.id);
             promiseBoardWorkStatesConfiguration.then(function(response) {
-                if (response['status'] == '200') {
-                    vm.defaultLeadTimeEndState = response['data']['defaultLeadTimeEndState']; 
-                    vm.defaultLeadTimeStartState = response['data']['defaultLeadTimeStartState'];
-                    vm.jiraWorkStates = response['data']['workStates'];
+                if (response['status'] === '200') {
+                    view_model.defaultLeadTimeEndState = response['data']['defaultLeadTimeEndState']; 
+                    view_model.defaultLeadTimeStartState = response['data']['defaultLeadTimeStartState'];
+                    view_model.jiraWorkStates = response['data']['workStates'];
                     // Find the index of default start/end lead time
-                    for (var i in vm.jiraWorkStates) {
-                        if (vm.jiraWorkStates[i]['name'] == vm.defaultLeadTimeStartState) {
+                    for (var i in view_model.jiraWorkStates) {
+                        if (view_model.jiraWorkStates[i]['name'] === view_model.defaultLeadTimeStartState) {
                             var start = Number(i);
-                            vm.currentStart = start;
-                        } else if (vm.jiraWorkStates[i]['name'] == vm.defaultLeadTimeEndState) {
+                            view_model.currentStart = start;
+                        } else if (view_model.jiraWorkStates[i]['name'] === view_model.defaultLeadTimeEndState) {
                             var end = Number(i) - 1;
-                            vm.currentEnd = end;
+                            view_model.currentEnd = end;
                         }
                     
                         // Give temporary index
-                        vm.jiraWorkStates[i]['index'] = Number(i);
+                        view_model.jiraWorkStates[i]['index'] = Number(i);
                     
                         // Find status that belongs to the state
-                        for (var status in vm.jiraWorkStates[i]['status']) {
-                            var label = vm.jiraWorkStates[i]['status'][status];
-                            vm.jiraWorkStates[i]['status'][status] = {
+                        for (var status in view_model.jiraWorkStates[i]['status']) {
+                            var label = view_model.jiraWorkStates[i]['status'][status];
+                            view_model.jiraWorkStates[i]['status'][status] = {
                                 'label': label,
                                 'selected': false,
                             }
                         }
                     }
                     
-                    for (var i in vm.jiraWorkStates) {
-                        if (i >= start && i <=end) {
-                            vm.jiraWorkStates[i]['selected'] = true;
-                        } else {
-                            vm.jiraWorkStates[i]['selected'] = false;
-                        }
+                    for (var i in view_model.jiraWorkStates) {
+                        view_model.jiraWorkStates[i]['selected'] = i >= start && i <= end;
                     }
                     warningToast('Reverted to board configuration! Click the save button to keep all changes.');
                 }
@@ -660,41 +646,41 @@
         
         function updateWorkStates() {
             Main.loading = true;
-            if(vm.selectedProject) {
+            if(view_model.selectedProject) {
                 // Build POST data body
-                var workStates = [];
-                var defaultLeadTimeStart = vm.jiraWorkStates.length;
-                var defaultLeadTimeEnd = 0;
-                for (var i in vm.jiraWorkStates) {
-                    if (vm.jiraWorkStates[i].selected) {
+                let workStates = [];
+                let defaultLeadTimeStart = view_model.jiraWorkStates.length;
+                let defaultLeadTimeEnd = 0;
+                for (var i in view_model.jiraWorkStates) {
+                    if (view_model.jiraWorkStates[i].selected) {
 
-                        if (defaultLeadTimeStart > vm.jiraWorkStates[i].index) {
-                            defaultLeadTimeStart = vm.jiraWorkStates[i].index;
-                            vm.defaultLeadTimeStartState = vm.jiraWorkStates[i].name;
+                        if (defaultLeadTimeStart > view_model.jiraWorkStates[i].index) {
+                            defaultLeadTimeStart = view_model.jiraWorkStates[i].index;
+                            view_model.defaultLeadTimeStartState = view_model.jiraWorkStates[i].name;
                         }
-                        if (defaultLeadTimeEnd < vm.jiraWorkStates[i].index + 1) {
-                            defaultLeadTimeEnd = vm.jiraWorkStates[i].index + 1;
-                            vm.defaultLeadTimeEndState = vm.jiraWorkStates[parseInt(i)+1].name;
+                        if (defaultLeadTimeEnd < view_model.jiraWorkStates[i].index + 1) {
+                            defaultLeadTimeEnd = view_model.jiraWorkStates[i].index + 1;
+                            view_model.defaultLeadTimeEndState = view_model.jiraWorkStates[parseInt(i)+1].name;
                         }
                     }
-                    var statusList = [];
-                    for (var j in vm.jiraWorkStates[i].status) {
-                        statusList.push(vm.jiraWorkStates[i].status[j].label);
+                    let statusList = [];
+                    for (var j in view_model.jiraWorkStates[i].status) {
+                        statusList.push(view_model.jiraWorkStates[i].status[j].label);
                     }
                     workStates.push({
                         'status': statusList,
-                        'name': vm.jiraWorkStates[i].name
+                        'name': view_model.jiraWorkStates[i].name
                     });
                 }
 
-                var workStatePostBody = {
-                    'defaultLeadTimeStartState': vm.defaultLeadTimeStartState,
-                    'defaultLeadTimeEndState': vm.defaultLeadTimeEndState,
+                let workStatePostBody = {
+                    'defaultLeadTimeStartState': view_model.defaultLeadTimeStartState,
+                    'defaultLeadTimeEndState': view_model.defaultLeadTimeEndState,
                     'workStates': workStates
-                }; 
-                var promiseUpdateWorkStates = configurationsService.updateWorkStates(vm.selectedProject.id, workStatePostBody);
+                };
+                let promiseUpdateWorkStates = configurationsService.updateWorkStates(view_model.selectedProject.id, workStatePostBody);
                 promiseUpdateWorkStates.then(function(response) {
-                    if (response['status'] == '200') {
+                    if (response['status'] === '200') {
                         warningToast('Saved!');
                     }
                 }).catch(function(errorResponse){
@@ -707,11 +693,11 @@
         }
 
         function resetJQLToBoard() {
-            if (vm.boardName) {
-                var JQLPromise = configurationsService.getBoardJQL(vm.boardName);
+            if (view_model.boardName) {
+                let JQLPromise = configurationsService.getBoardJQL(view_model.boardName);
                 JQLPromise.then(function(response) {
-                    vm.issueFilter = response['data']['issue_filter'];
-                    getIssueFilter(vm.issueFilter);
+                    view_model.issueFilter = response['data']['issue_filter'];
+                    getIssueFilter(view_model.issueFilter);
                 }).catch(function(errorResponse) {
                     console.log(errorResponse);
                     warningToast(errorResponse['data']['message']);
@@ -722,17 +708,17 @@
         }
 
         function projectETL() {
-            var projectETLPromise = configurationsService.projectETL(vm.selectedProject.id, false);
+            let projectETLPromise = configurationsService.projectETL(view_model.selectedProject.id, false);
             projectETLPromise.then(function(response) {
-                warningToast("Successfully triggered ETL for " + vm.selectedProject.name + ". Please come back later when data gets loaded.");
-                vm.disableETL = true;
+                warningToast("Successfully triggered ETL for " + view_model.selectedProject.name + ". Please come back later when data gets loaded.");
+                view_model.disableETL = true;
             }).catch(function(errorResponse) {
                 warningToast(errorResponse.data)
             })
         }
 
         function issueTypeETL() {
-            var issueTypeETLPromise = configurationsService.projectETL(vm.selectedProject.id, true);
+            let issueTypeETLPromise = configurationsService.projectETL(view_model.selectedProject.id, true);
             issueTypeETLPromise.then(function(response) {
                 warningToast("Successfully triggered issue type ETL.");
                 setTimeout(function() {
@@ -744,12 +730,12 @@
         }
 
         function getETLStatus() {
-            var etlStatusPromise = configurationsService.etlStatus(vm.selectedProject.id);
+            let etlStatusPromise = configurationsService.etlStatus(view_model.selectedProject.id);
             etlStatusPromise.then(function(response) {
-                var last_etl_run = response["data"]["last_etl_run"];
-                var current_time = new Date().getTime() / 1000;
+                let last_etl_run = response["data"]["last_etl_run"];
+                let current_time = new Date().getTime() / 1000;
                 if (last_etl_run != null && (current_time - last_etl_run) < 300) {
-                    vm.disableETL = true;
+                    view_model.disableETL = true;
                 }
             })
         }

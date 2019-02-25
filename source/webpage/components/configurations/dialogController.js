@@ -44,7 +44,7 @@
                 $mdDialog.cancel();
             };
 
-            $scope.checkInput = function() {    
+            $scope.checkInput = function() {
                 try{
                     let input = document.getElementById("teamName");
                     if($scope.teamName.length == null || $scope.teamName.length < 3) {

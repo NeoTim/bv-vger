@@ -44,7 +44,7 @@ case ${env} in
 esac
 
 # Define the UI config file for this environment
-ui_config=`${bindir}/ui-config.sh ${env}`
+ui_config=`${bindir}/ui-config.sh ${env} ${ssm_store}`
 
 # Deploy UI code to S3 bucket
 cd ${bindir}/..

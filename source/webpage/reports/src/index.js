@@ -207,7 +207,7 @@ class Root extends React.Component {
                        </div>
                        <ul className = "mainNavDropDown clearfix overlay" onClick={this.slideToggle}>
                          <li><a id="VGer-Link" target="_blank" rel="noopener noreferrer" href={this.obj['baseURL'].split("reports")+"#!/team"}>VGer</a></li>
-                         <li><a id="JIRA-Link" target="_blank" rel="noopener noreferrer" href={constants.JIRA_BOARD_URL+this.obj["boardID"]}>View Board in JIRA </a></li>
+                         <li><a id="JIRA-Link" target="_blank" rel="noopener noreferrer" href={constants.JIRA_URL+this.obj["boardID"]}>View Board in JIRA </a></li>
                        </ul>
                     </ul>
                   </div>

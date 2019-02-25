@@ -30,7 +30,7 @@ class Menus extends React.Component {
       this.dataset = this.props.data.workTypes.split(",");
       this.props.data.selectedWorkTypes = this.props.data.selectedWorkTypes.split(",");
 
-      var selected = [];
+      let selected = [];
       for(i=0; i<this.props.data.selectedWorkTypes.length;i++)
         selected[i] = decodeURIComponent(this.props.data.selectedWorkTypes[i]);
 
