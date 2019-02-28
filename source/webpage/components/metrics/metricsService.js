@@ -240,7 +240,6 @@ import * as constants from "../../shared/constants.js"
     function metricsFilterService($http) {
         return {
             getTeams: getTeams,
-            getAvailableTeams: getAvailableTeams,
             getProjects: getProjects,
             getWorkTypes: getWorkTypes,
         };
@@ -251,13 +250,6 @@ import * as constants from "../../shared/constants.js"
             return $http({
                 method: 'GET',
                 url: encodeURI(constants.API_GATEWAY_URL + '/team/')
-            });
-        }
-
-        function getAvailableTeams() {
-            return $http({
-                method: 'GET',
-                url: $rootScope.TEAM_LIST_API_ENDPOINT
             });
         }
 

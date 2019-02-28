@@ -15,19 +15,18 @@
         vm.getProjectList = getProjectList;
         vm.getMetrics = getMetrics;
         vm.addWebpageConstants = addWebpageConstants;
-        let selectedTeamName;
         let selectedProjectId;
         let selectedProjectName;
-        getProjectList($window.sessionStorage.selectedTeamId, $window.sessionStorage.selectedTeamName);
+        getProjectList($window.sessionStorage.selectedTeamId);
         addWebpageConstants();
 
         // Get list of projects for the selectedTeam
-        function getProjectList(id, name) {
+        function getProjectList(id) {
             let promiseProject = metricsFilterService.getProjects(id);
             promiseProject.then(function (response) {
                 sortByKey(response.data, 'name');
                 vm.projects = [];
-                for (var key in response.data) {
+                for (let key in response.data) {
                     vm.projects.push(response.data[key]);
                 }
             }).catch(function (errorResponse) {

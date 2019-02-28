@@ -3,6 +3,9 @@
  *  Handles input forms and rendering google chart
  */
 
+import * as constants from "../../shared/constants.js"
+import {JIRA_HOST_URL} from "../../shared/constants";
+
 (function () {
     'use strict';
 
@@ -1240,7 +1243,7 @@
                 boardIDPromise.then(function (responseID) {
                     $window.sessionStorage.selectedBoardID = responseID["data"]["board_id"];
                     let linkDOM = document.getElementById("JIRA-Link");
-                    let link = $rootScope.BOARD_ID_URL + responseID["data"]['board_id'];
+                    let link = constants.JIRA_HOST_URL + '/secure/RapidBoard.jspa?rapidView=' + responseID["data"]['board_id'];
                     linkDOM.setAttribute("href", link);
                     buildNewURL();
                 });
@@ -1248,45 +1251,31 @@
             addWebpageConstants();
         }
 
+        function assignLink(element, value) {
+            element.href = value
+        }
+
         function addWebpageConstants() {
             if (!$rootScope.VGER_GUIDE) {
                 constantsService.setRootScopeConstants();
             }
 
-            let link = document.getElementById("vger_guide_link");
-            link.href = $rootScope.VGER_GUIDE;
-
-            link = document.getElementById("jira_support_project_url");
-            link.href = $rootScope.JIRA_SUPPORT_PROJECT_URL;
-
-            link = document.getElementById("jira_support_project_url2");
-            link.href = $rootScope.JIRA_SUPPORT_PROJECT_URL;
-
-            link = document.getElementById("quadrant_1_link");
-            link.href = $rootScope.THROUGHPUT_README;
-
-            link = document.getElementById("jira_support_project_url3");
-            link.href = $rootScope.JIRA_SUPPORT_PROJECT_URL;
-
-            link = document.getElementById("jira_support_project_url4");
-            link.href = $rootScope.JIRA_SUPPORT_PROJECT_URL;
-
-            link = document.getElementById("quadrant_3_link");
-            link.href = $rootScope.THROUGHPUT_VARIATION_README;
-
-            link = document.getElementById("jira_support_project_url5");
-            link.href = $rootScope.JIRA_SUPPORT_PROJECT_URL;
-
-            link = document.getElementById("quadrant_4_link");
-            link.href = $rootScope.LEADTIMES_README;
+            assignLink(document.getElementById("vger_guide_link"), $rootScope.VGER_GUIDE);
+            assignLink(document.getElementById("jira_support_project_url"), $rootScope.JIRA_SUPPORT_PROJECT_URL);
+            assignLink(document.getElementById("jira_support_project_url2"), $rootScope.JIRA_SUPPORT_PROJECT_URL);
+            assignLink(document.getElementById("quadrant_1_link"), $rootScope.THROUGHPUT_README);
+            assignLink(document.getElementById("jira_support_project_url3"), $rootScope.JIRA_SUPPORT_PROJECT_URL);
+            assignLink(document.getElementById("jira_support_project_url4"), $rootScope.JIRA_SUPPORT_PROJECT_URL);
+            assignLink(document.getElementById("quadrant_3_link"), $rootScope.THROUGHPUT_VARIATION_README);
+            assignLink(document.getElementById("jira_support_project_url5"), $rootScope.JIRA_SUPPORT_PROJECT_URL);
+            assignLink(document.getElementById("quadrant_4_link"), $rootScope.LEADTIMES_README);
         }
 
         function updateWebpageConstants() {
-            let link = document.getElementById("quadrant_2_link");
             if (view_model.viewMode === 'issue') {
-                link.href = $rootScope.BACKLOG_README;
+                assignLink(document.getElementById("quadrant_2_link"), $rootScope.BACKLOG_README);
             } else {
-                link.href = $rootScope.PR_GROWTH_README;
+                assignLink(document.getElementById("quadrant_2_link"), $rootScope.PR_GROWTH_README);
             }
         }
 
