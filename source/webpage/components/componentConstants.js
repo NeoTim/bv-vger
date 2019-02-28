@@ -15,8 +15,6 @@
         const THROUGHPUT_README = "https://github.com/bazaarvoice/bv-vger/blob/master/doc/external/throughput.md";
         const THROUGHPUT_VARIATION_README = "https://github.com/bazaarvoice/bv-vger/blob/master/doc/external/throughput_variation.md";
         const VGER_GUIDE = "https://github.com/bazaarvoice/bv-vger/blob/master/doc/external/vger_the_complete_guide.md";
-
-        const JIRA_SUPPORT_PROJECT_URL = '';
         const ADD_PROJECT_URL = "see external folder in gops-vger/docs";
 
         return {
@@ -30,7 +28,6 @@
             $rootScope.THROUGHPUT_README = THROUGHPUT_README;
             $rootScope.THROUGHPUT_VARIATION_README = THROUGHPUT_VARIATION_README;
             $rootScope.VGER_GUIDE = VGER_GUIDE;
-            $rootScope.JIRA_SUPPORT_PROJECT_URL = JIRA_SUPPORT_PROJECT_URL;
             $rootScope.ADD_PROJECT_URL = ADD_PROJECT_URL;
         }
     }

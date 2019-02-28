@@ -1261,14 +1261,14 @@ import {JIRA_HOST_URL} from "../../shared/constants";
             }
 
             assignLink(document.getElementById("vger_guide_link"), $rootScope.VGER_GUIDE);
-            assignLink(document.getElementById("jira_support_project_url"), $rootScope.JIRA_SUPPORT_PROJECT_URL);
-            assignLink(document.getElementById("jira_support_project_url2"), $rootScope.JIRA_SUPPORT_PROJECT_URL);
             assignLink(document.getElementById("quadrant_1_link"), $rootScope.THROUGHPUT_README);
-            assignLink(document.getElementById("jira_support_project_url3"), $rootScope.JIRA_SUPPORT_PROJECT_URL);
-            assignLink(document.getElementById("jira_support_project_url4"), $rootScope.JIRA_SUPPORT_PROJECT_URL);
             assignLink(document.getElementById("quadrant_3_link"), $rootScope.THROUGHPUT_VARIATION_README);
-            assignLink(document.getElementById("jira_support_project_url5"), $rootScope.JIRA_SUPPORT_PROJECT_URL);
             assignLink(document.getElementById("quadrant_4_link"), $rootScope.LEADTIMES_README);
+            assignLink(document.getElementById("jira_support_project_url"), constants.JIRA_SUPPORT_URL);
+            assignLink(document.getElementById("jira_support_project_url2"), constants.JIRA_SUPPORT_URL);
+            assignLink(document.getElementById("jira_support_project_url3"), constants.JIRA_SUPPORT_URL);
+            assignLink(document.getElementById("jira_support_project_url4"), constants.JIRA_SUPPORT_URL);
+            assignLink(document.getElementById("jira_support_project_url5"), constants.JIRA_SUPPORT_URL);
         }
 
         function updateWebpageConstants() {

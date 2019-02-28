@@ -39,6 +39,7 @@ esac
 
 api_gateway=$(aws ssm get-parameter --name /${ssm_store}/apigateway/${env}/url --query "Parameter"."Value" --output text)
 jira_url=$(aws ssm get-parameter --name /${ssm_store}/jira/${env}/host_url --query "Parameter"."Value" --output text)
+support_url=$(aws ssm get-parameter --name /${ssm_store}/support_url --query "Parameter"."Value" --output text)
 
 # Setup the UI config file for this environment
 cd ${bindir}/..
@@ -57,6 +58,7 @@ cat > ${config_src_path} << EOL
 
 export const API_GATEWAY_URL = '${api_gateway}';
 export const JIRA_HOST_URL = '${jira_url}';
+export const JIRA_SUPPORT_URL = '${support_url}';
 EOL
 
 # Return the generated config file path
