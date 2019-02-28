@@ -1,3 +1,5 @@
+import * as constants from "../../shared/constants.js"
+
 (function () {
     'use strict';
 
@@ -8,13 +10,13 @@
 
     function projectController($scope, $location, $rootScope, $window, metricsFilterService, constantsService) {
 
-        let vm = this; // view-model
+        let view_model = this; // view-model
 
-        vm.teams = [];
-        vm.projects = [];
-        vm.getProjectList = getProjectList;
-        vm.getMetrics = getMetrics;
-        vm.addWebpageConstants = addWebpageConstants;
+        view_model.teams = [];
+        view_model.projects = [];
+        view_model.getProjectList = getProjectList;
+        view_model.getMetrics = getMetrics;
+        view_model.addWebpageConstants = addWebpageConstants;
         let selectedProjectId;
         let selectedProjectName;
         getProjectList($window.sessionStorage.selectedTeamId);
@@ -25,16 +27,16 @@
             let promiseProject = metricsFilterService.getProjects(id);
             promiseProject.then(function (response) {
                 sortByKey(response.data, 'name');
-                vm.projects = [];
+                view_model.projects = [];
                 for (let key in response.data) {
-                    vm.projects.push(response.data[key]);
+                    view_model.projects.push(response.data[key]);
                 }
             }).catch(function (errorResponse) {
                 console.log(errorResponse);
             });
         }
 
-        function addWebpageConstants() {
+        function addWebpageConstants(id) {
             if (!$rootScope.VGER_GUIDE) {
                 constantsService.setRootScopeConstants();
             }
@@ -42,7 +44,7 @@
             link.href = $rootScope.VGER_GUIDE;
 
             link = document.getElementById("add_project_link");
-            link.href = $rootScope.ADD_PROJECT_URL;
+            link.href = constants.API_GATEWAY_URL + '/team/' + id +'/project/';
         }
 
         function getMetrics(id, name) {

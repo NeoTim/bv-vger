@@ -4,7 +4,6 @@
  */
 
 import * as constants from "../../shared/constants.js"
-import {JIRA_HOST_URL} from "../../shared/constants";
 
 (function () {
     'use strict';
