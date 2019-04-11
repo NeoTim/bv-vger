@@ -1,0 +1,17 @@
+service: vger
+
+custom:
+  envConfig: ${file(variables.yml)}
+  awsRegion: ${self:custom.envConfig.awsRegion, 'us-east-1'}
+  awsAccountId: ${self:custom.envConfig.awsAccountId, '981263594894'}
+
+provider:
+  name: aws
+  stage: ${self:custom.envConfig.stage, 'qa'}
+
+resources:
+  Resources:
+    WebpageLocation:
+      Type: AWS::S3::Bucket
+      Properties: 
+        BucketName: vger-webpage-static-hosting
