@@ -4,7 +4,7 @@ import urllib
 import re
 from source.git_etl.constants import git_etl_constants
 from source.jira_etl.constants import jira_etl_constants
-from source.web_api.utils.redshift_connection import RedshiftConnection
+from source.web_api.utils.redshift_connection.redshift_connection import RedshiftConnection
 from source.web_api.utils.constants import web_api_constants
 
 
@@ -71,7 +71,7 @@ class ApiResponseError(Exception):
         self.body = body
 
 
-def api_error_response_handler(method, args):
+def api_response_handler(method, args):
     try:
         return method(args)
     except ApiResponseError as api_error_response:
@@ -80,7 +80,7 @@ def api_error_response_handler(method, args):
 
 
 def handler(event, context):
-    return api_error_response_handler(__create_project, event)
+    return api_response_handler(__create_project, event)
 
 
 def __create_project(event):
