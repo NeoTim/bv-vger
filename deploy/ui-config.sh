@@ -56,9 +56,11 @@ cat > ${config_src_path} << EOL
  * All of this JavaScript will by visible by any user who has access to the Vger UI
  */
 
-export const API_GATEWAY_URL = '${api_gateway}';
-export const JIRA_HOST_URL = '${jira_url}';
-export const JIRA_SUPPORT_URL = '${support_url}';
+const API_GATEWAY_URL = '${api_gateway}';
+const JIRA_HOST_URL = '${jira_url}';
+const JIRA_SUPPORT_URL = '${support_url}';
+
+export {API_GATEWAY_URL, JIRA_HOST_URL, JIRA_SUPPORT_URL};
 EOL
 
 # Return the generated config file path

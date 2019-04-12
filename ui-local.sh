@@ -24,7 +24,7 @@ fi
 
 # Define the UI config file for the QA environment         
 bindir=`dirname $0`
-ui_config=`${bindir}/deploy/ui-config.sh qa, ${ssm_store}`
+ui_config=`${bindir}/deploy/ui-config.sh qa ${ssm_store}`
 
 # Run current UI code in a local Web server
 cd ${bindir}/source/webpage
