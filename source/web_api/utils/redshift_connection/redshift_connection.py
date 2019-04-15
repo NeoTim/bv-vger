@@ -57,6 +57,12 @@ class RedshiftConnection(object):
         valid = self.cur.fetchone()
         return True if valid else False
 
+    def validate_team_by_id(self, team_id):
+        select_team_id_query = "SELECT name, id FROM team WHERE id = %s"
+        self.cur.execute(select_team_id_query, (team_id,))
+        valid = self.cur.fetchone()
+        return True if valid else False
+
     def validateProjectName(self, projectName):
         '''
         rtype:  boolean
@@ -255,6 +261,22 @@ class RedshiftConnection(object):
         self.cur.execute(getTeamId, (teamName,))
         result = self.cur.fetchone()
         return result[0]
+
+    def get_team_by_id(self, team_id):
+        select_team_id_query = "SELECT name, id FROM team WHERE id = %s"
+        self.cur.execute(select_team_id_query, (team_id,))
+        return self.cur.fetchall()
+
+    def get_team_from_project(self, team_id, project_name = None):
+        base_query = "SELECT name, id FROM team_project WHERE team_project.team_id = %s"
+        if project_name is not None:
+            query = base_query + " AND name = %s"
+            self.cur.execute(query, (team_id, project_name))
+        else:
+            self.cur.execute(base_query, (team_id,))
+
+        self.conn.commit()
+        return self.cur.fetchall()
 
     def getProjectId(self, projectName):
         '''

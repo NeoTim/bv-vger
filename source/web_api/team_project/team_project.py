@@ -1,95 +1,61 @@
 from __future__ import print_function
 import json
 import urllib
-import psycopg2
-from source import common_constants
+from source.web_api.utils.redshift_connection.redshift_connection import RedshiftConnection
+
+
+class ApiResponseError(Exception):
+    def __init__(self, status_code, body):
+        self.status_code = status_code
+        self.body = body
+
+
+def api_response_handler(method, args):
+    try:
+        return method(args)
+    except ApiResponseError as api_error_response:
+        return response_formatter(status_code=api_error_response.status_code,
+                                  body=api_error_response.body)
+
+
+# TODO This needs to be restricted down to lowest privilege needed
+def response_formatter(status_code='400', body={'message': 'error'}):
+    api_response = {
+        'statusCode': status_code,
+        'headers': {
+            'Access-Control-Allow-Origin': '*',
+            "Access-Control-Allow-Credentials": True,
+            'Access-Control-Allow-Headers': '*',
+            'Content-Type': 'application/json',
+            'Access-Control-Expose-Headers': 'X-Amzn-Remapped-Authorization',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
+        },
+        'body': json.dumps(body)
+    }
+    return api_response
 
 
 def handler(event, context):
+    api_response_handler(__describe_team_project, event)
+
+
+def __describe_team_project(event):
     # Grab the data passed to the lambda function through the browser URL (API Gateway)
-    try:
-        teamID = (event.get('pathParameters').get('id'))
-    except Exception as e:
-        payload = {"message": "Could not get id path parameter"}
-        response = {
-            "statusCode": 400,
-            "body": json.dumps(payload)
-        }
-        return response
+    team_id = __get_team_id_from_input(lambda_input=event)
 
-    # Connect to the Vger Redshift DB
-    conn = psycopg2.connect(dbname=common_constants.REDSHIFT_DATABASE_NAME,
-                            host=common_constants.REDSHIFT_CLUSTER_ENDPOINT,
-                            port=common_constants.REDSHIFT_PORT,
-                            user=common_constants.REDSHIFT_USERNAME,
-                            password=common_constants.REDSHIFT_PASSWORD)
-    cur = conn.cursor()
+    __fetch_team_by_id(team_id)
 
-    selectIDQuery = "SELECT name, id FROM team WHERE id = %s"
+    query_string_parameters = event.get('queryStringParameters')
+    project_name = query_string_parameters.get('name') if query_string_parameters else None
 
-    try:
-        cur.execute(selectIDQuery, (teamID,))
-        conn.commit()
-        results = cur.fetchall()
-    except Exception:
-        cur.close()
-        conn.close()
-        payload = {"message": "Internal Error. Could not query database given parameters"}
-        response = {
-            "statusCode": 500,
-            "body": json.dumps(payload)
-        }
-        return response
-
-    if not results:
-        cur.close()
-        conn.close()
-        payload = {"message": "No resource with team ID {} found".format(teamID)}
-        response = {
-            "statusCode": 404,
-            "body": json.dumps(payload)
-        }
-        return response
-
-    query = "SELECT name, id FROM team_project WHERE team_project.team_id = %s"
-
-    try:
-        projectName = (event.get('queryStringParameters').get('name'))
-    except Exception:
-        projectName = None
-
-    try:
-        if projectName is not None:
-            try:
-                decodedProject = urllib.unquote(projectName).decode('utf8')
-            except Exception:
-                payload = {"message": "Could not decode given project name parameter: {}".format(projectName)}
-                response = {
-                    "statusCode": 400,
-                    "body": json.dumps(payload)
-                }
-                return response
-            query += " AND name = %s"
-            cur.execute(query, (teamID, decodedProject))
-        else:
-            cur.execute(query, (teamID,))
-        conn.commit()
-        results = cur.fetchall()
-    except Exception:
-        cur.close()
-        conn.close()
-        payload = {"message": "Internal Error. Could not query database given parameters"}
-        response = {
-            "statusCode": 500,
-            "body": json.dumps(payload)
-        }
-        return response
+    results = __get_team_from_project(project_name=project_name,
+                                      team_id=team_id)
 
     payload = []
     columns = ['name', 'id']
     for result in results:
-        teamConfig = [result[0], result[1]]
-        payload.append(dict(zip(columns, teamConfig)))
+        team_config = [result[0], result[1]]
+        payload.append(dict(zip(columns, team_config)))
 
     response = {
         "statusCode": 200,
@@ -99,7 +65,50 @@ def handler(event, context):
         },
         "body": json.dumps(payload)
     }
-
-    cur.close()
-    conn.close()
     return response
+
+
+def __decode_project_name(project_name):
+    try:
+        return urllib.unquote(project_name).decode('utf8')
+    except Exception:
+        payload = {"message": "Could not decode given project name parameter: {}".format(project_name)}
+        raise ApiResponseError(status_code=400, body=payload)
+
+
+def __get_team_from_project(project_name, team_id):
+    database = RedshiftConnection()
+    decoded_project_name = __decode_project_name(project_name)
+
+    try:
+        return database.get_team_from_project(team_id=team_id,
+                                              project_name=decoded_project_name)
+    except Exception:
+        database.closeConnection()
+        payload = {"message": "Internal Error. Could not query database given parameters"}
+        raise ApiResponseError(status_code=500, body=payload)
+
+
+def __get_team_id_from_input(lambda_input):
+    try:
+        return lambda_input.get('pathParameters').get('id')
+    except Exception:
+        payload = {"message": "Could not get id path parameter"}
+        raise ApiResponseError(status_code=400, body=payload)
+
+
+def __fetch_team_by_id(team_id):
+    database = RedshiftConnection()
+    try:
+        results = database.get_team_by_id(team_id=team_id)
+    except Exception:
+        database.closeConnection()
+        payload = {"message": "Internal Error. Could not query database given parameters"}
+        raise ApiResponseError(status_code=500, body=payload)
+
+    if not results:
+        database.closeConnection()
+        payload = {"message": "No resource with team ID {} found".format(team_id)}
+        raise ApiResponseError(status_code=404, body=payload)
+
+    return results
