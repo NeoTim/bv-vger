@@ -1,5 +1,6 @@
 from __future__ import print_function
 import psycopg2
+import time
 from psycopg2.extras import execute_values
 from source import common_constants
 
@@ -437,3 +438,76 @@ class RedshiftConnection(object):
             self.closeConnection()
             raise e
         return results
+
+    def get_team_config_from_project(self, team_id):
+        TEAM_CONFIG_COLUMNS = ["id", "name", "issue_filter", "last_issue_change"]
+        get_team_config_query = "SELECT {} FROM team_project WHERE id = %s".format(','.join(TEAM_CONFIG_COLUMNS))
+
+        with self.conn:
+            with self.conn.cursor() as cur:
+                cur.execute(get_team_config_query, (team_id,))
+                result = cur.fetchone()
+                return {
+                    TEAM_CONFIG_COLUMNS[0]: result[0],  # id
+                    TEAM_CONFIG_COLUMNS[1]: result[1],  # name
+                    TEAM_CONFIG_COLUMNS[2]: result[2],  # issue_filter
+                    TEAM_CONFIG_COLUMNS[3]: result[3]   # last_issue_change
+                }
+
+    def update_last_etl(self, team_config):
+        get_last_etl_query = "SELECT last_etl_run FROM team_project_etl WHERE team_project_id = %s"
+        update_start_time = time.time()
+
+        with self.conn:
+            with self.conn.cursor() as cur:
+                cur.execute(get_last_etl_query, (team_config.get("id"),))
+                result = cur.fetchone()
+
+        with self.conn:
+            with self.conn.cursor() as cur:
+                if result is None:
+                    update_last_etl_run_query = "INSERT INTO team_project_etl (last_etl_run, team_project_id) VALUES (%s, %s)"
+                elif (not result[0]) or (update_start_time - result[0] > 300):
+                    update_last_etl_run_query = "UPDATE team_project_etl SET last_etl_run = %s WHERE team_project_id = %s"
+                else:
+                    print("ERROR: ETL for project {} is already running at time {}".format(
+                        team_config.get("name"), result[0]
+                    ))
+                    return
+
+                cur.execute(update_last_etl_run_query, (int(update_start_time), team_config.get("id")))
+                return {
+                    "update_start_time": update_start_time
+                }
+
+    def reset_last_etl(self, team_id):
+        with self.conn:
+            with self.conn.cursor() as cur:
+                resetLastETLRunQuery = "UPDATE team_project_etl SET last_etl_run = NULL WHERE team_project_id = %s"
+                cur.execute(resetLastETLRunQuery, (team_id,))
+
+    def update_last_issue_change_from_s3(self, s3_bucket, s3_file_name, last_issue_change, team_id):
+        transactionQuery = "BEGIN TRANSACTION;" \
+                           "COPY issue_change from 's3://" + s3_bucket + "/" + s3_file_name + \
+                           "' credentials 'aws_iam_role=arn:aws:iam::" + common_constants.AWS_ACCOUNT_ID + ":role/vger-python-lambda" + \
+                           "' dateformat 'auto' timeformat 'auto' csv;" \
+                           "UPDATE team_project SET last_issue_change='{}' WHERE id={};" \
+                           "END TRANSACTION;".format(last_issue_change, team_id)
+        self.cur.execute(transactionQuery)
+        self.conn.commit()
+
+    def update_last_issue_change_from_csv(self, csv_path, last_issue_change, team_id):
+        local_csv_file = open(csv_path, 'r')
+        self.cur.copy_from(file=local_csv_file, table='issue_change', sep=',', columns=('team_project_id',
+                                                                                        'changed',
+                                                                                        'issue_key',
+                                                                                        'field_name',
+                                                                                        'prev_value',
+                                                                                        'new_value',
+                                                                                        'issue_type',
+                                                                                        'resolution',
+                                                                                        'subtask'))
+        local_csv_file.close()
+        transactionQuery = "UPDATE team_project SET last_issue_change='{}' WHERE id={};".format(last_issue_change, team_id)
+        self.cur.execute(transactionQuery)
+        self.conn.commit()

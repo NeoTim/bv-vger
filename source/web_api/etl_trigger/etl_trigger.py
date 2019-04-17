@@ -10,7 +10,7 @@ from response_helper import response_formatter
 def handler(event, context):
     try:
         lambda_client = boto3.client('lambda')
-        ENV = os.environ['ENV']
+        ENV = os.environ['VGER_ENV']
         if event.get('queryStringParameters'):
             print("Invoke issue type etl in {}".format(ENV))
             function_name = "vger-sls-jira-issue-type-etl-{}".format(ENV)

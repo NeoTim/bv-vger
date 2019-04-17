@@ -2,7 +2,7 @@ from __future__ import print_function
 import os
 
 # These packages are needed in the ZIP file uploaded into Lambda
-from jira_load import jiraLoad
+from jira_load import jira_load
 import pandas as pd
 from source.jira_etl.lib import jira_etl_lib
 from source.jira_etl.constants import jira_etl_constants
@@ -128,24 +128,29 @@ def getDataFrame(batchSize=1000, startAt=0, timestampSince=0, initialLoad=True, 
     return [df, lastIssueChange]
 
 
-def jiraTransform(data):
-    filePart = data.get('filePart')
-    batchSize = data.get('batchSize')
-    startAt = data.get('startAt')
-    teamConfig = data.get('teamConfig')
-    timestampSince = data.get('timestampSince')
-    initialLoad = data.get('initialLoad')
-
+def jira_transform(file_part,
+                   batch_size,
+                   start_at,
+                   team_config,
+                   timestamp_since,
+                   initial_load):
     # Turn the JIRA data into a dataframe
-    results = getDataFrame(batchSize=batchSize, startAt=startAt, timestampSince=timestampSince, initialLoad=initialLoad, teamConfig=teamConfig)
-    df = results[0]
-    lastIssueChange = results[1]
+    results = getDataFrame(batchSize=batch_size,
+                           startAt=start_at,
+                           timestampSince=timestamp_since,
+                           initialLoad=initial_load,
+                           teamConfig=team_config)
+    data_frame = results[0]
+    last_issue_change = results[1]
     # Set the index of each issue in the batch
-    df.index += startAt
+    data_frame.index += start_at
     # AWS Lambda functions can only write to /tmp/
-    csvPath = "/tmp/project_"+str(teamConfig.get("id"))+"_part_"+str(filePart)+"_"+os.environ["ENV"]+".csv"
-    print ("Writing data to", csvPath)
-    df.to_csv(csvPath, index=False, header=None)
-    payload={"teamConfig": teamConfig, "csvPath": csvPath, "lastIssueChange": lastIssueChange}
+    csv_path = "/tmp/project_" + str(team_config.get("id")) + "_part_" + str(file_part) + "_" + os.environ['VGER_ENV'] + ".csv"
+    print ("Writing data to", csv_path)
+    data_frame.to_csv(csv_path, index=False, header=None)
+
     # Load the CSV
-    jiraLoad(payload)
+    jira_load(team_id=team_config.get('id'),
+              csv_path=csv_path,
+              last_issue_change=last_issue_change)
+
