@@ -2,37 +2,8 @@ from __future__ import print_function
 import json
 import urllib
 from source.web_api.utils.redshift_connection.redshift_connection import RedshiftConnection
-
-
-class ApiResponseError(Exception):
-    def __init__(self, status_code, body):
-        self.status_code = status_code
-        self.body = body
-
-
-def api_response_handler(method, args):
-    try:
-        return method(args)
-    except ApiResponseError as api_error_response:
-        return response_formatter(status_code=api_error_response.status_code,
-                                  body=api_error_response.body)
-
-
-# TODO This needs to be restricted down to lowest privilege needed
-def response_formatter(status_code='400', body={'message': 'error'}):
-    api_response = {
-        'statusCode': status_code,
-        'headers': {
-            'Access-Control-Allow-Origin': '*',
-            "Access-Control-Allow-Credentials": True,
-            'Access-Control-Allow-Headers': '*',
-            'Content-Type': 'application/json',
-            'Access-Control-Expose-Headers': 'X-Amzn-Remapped-Authorization',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
-        },
-        'body': json.dumps(body)
-    }
-    return api_response
+from source.web_api.utils.api_response_helper import ApiResponseError
+from source.web_api.utils.api_response_helper import api_response_handler
 
 
 def handler(event, context):
@@ -81,12 +52,15 @@ def __get_team_from_project(project_name, team_id):
     decoded_project_name = __decode_project_name(project_name)
 
     try:
-        return database.get_team_from_project(team_id=team_id,
+        team = database.get_team_from_project(team_id=team_id,
                                               project_name=decoded_project_name)
     except Exception:
         database.closeConnection()
         payload = {"message": "Internal Error. Could not query database given parameters"}
         raise ApiResponseError(status_code=500, body=payload)
+    finally:
+        database.closeConnection()
+    return team
 
 
 def __get_team_id_from_input(lambda_input):
@@ -105,9 +79,10 @@ def __fetch_team_by_id(team_id):
         database.closeConnection()
         payload = {"message": "Internal Error. Could not query database given parameters"}
         raise ApiResponseError(status_code=500, body=payload)
+    finally:
+        database.closeConnection()
 
     if not results:
-        database.closeConnection()
         payload = {"message": "No resource with team ID {} found".format(team_id)}
         raise ApiResponseError(status_code=404, body=payload)
 

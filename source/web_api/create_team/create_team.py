@@ -1,36 +1,9 @@
 import json
 # from redshift_connection import RedshiftConnection
 from source.web_api.utils.redshift_connection.redshift_connection import RedshiftConnection
-
-
-class ApiResponseError(Exception):
-    def __init__(self, status_code, body):
-        self.status_code = status_code
-        self.body = body
-
-
-def api_response_handler(method, args):
-    try:
-        return method(args)
-    except ApiResponseError as api_error_response:
-        return response_formatter(status_code=api_error_response.status_code,
-                                  body=api_error_response.body)
-
-
-def response_formatter(status_code='400', body={'message': 'error'}):
-    api_response = {
-        'statusCode': status_code,
-        'headers': {
-            'Access-Control-Allow-Origin': '*',
-            "Access-Control-Allow-Credentials": True,
-            'Access-Control-Allow-Headers': '*',
-            'Content-Type': 'application/json',
-            'Access-Control-Expose-Headers': 'X-Amzn-Remapped-Authorization',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
-        },
-        'body': json.dumps(body)
-    }
-    return api_response
+from source.web_api.utils.api_response_helper import ApiResponseError
+from source.web_api.utils.api_response_helper import response_formatter
+from source.web_api.utils.api_response_helper import api_response_handler
 
 
 def handler(event, context):
@@ -61,6 +34,7 @@ def __fetch_id_of_created_team(team_name):
     try:
         return redshift.getTeamId(team_name)
     except Exception:
+        redshift.closeConnection()
         payload = {'message': 'Internal error'}
         raise ApiResponseError(status_code='500', body=payload)
     finally:
@@ -72,6 +46,7 @@ def __create_team_in_database(team_name):
     try:
         redshift.insertTeam(team_name)
     except Exception as e:
+        redshift.closeConnection()
         payload = {'message': 'Failed to insert {} into team {}'.format(team_name, e)}
         raise ApiResponseError(status_code='500', body=payload)
     finally:
@@ -87,6 +62,7 @@ def __validate_team_name(team_name):
             payload = {'message': 'Team name already exists'}
             return response_formatter(status_code='400', body=payload)
     except Exception:
+        redshift.closeConnection()
         payload = {'message': 'Internal error'}
         raise ApiResponseError(status_code='500', body=payload)
     finally:

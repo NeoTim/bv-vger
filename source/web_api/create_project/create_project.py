@@ -6,77 +6,9 @@ from source.git_etl.constants import git_etl_constants
 from source.jira_etl.constants import jira_etl_constants
 from source.web_api.utils.redshift_connection.redshift_connection import RedshiftConnection
 from source.web_api.utils.constants import web_api_constants
-
-
-def response_formatter(status_code='400', body={'message': 'error'}):
-    api_response = {
-        'statusCode': status_code,
-        'headers': {
-            'Access-Control-Allow-Origin': '*',
-            "Access-Control-Allow-Credentials": True,
-            'Access-Control-Allow-Headers': '*',
-            'Content-Type': 'application/json',
-            'Access-Control-Expose-Headers': 'X-Amzn-Remapped-Authorization',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS'
-        },
-        'body': json.dumps(body)
-    }
-    return api_response
-
-
-def find_default_start_state(columns):
-    default_state = ''
-    first_column = ''
-    contains_open = False
-    for index, column in enumerate(columns):
-        state = column['name']
-        if index == 0:
-            first_column = state
-        if contains_open:
-            # If open status was found in the previous state, return current state
-            default_state = state
-            return default_state
-        for status in column['mappedStatuses']:
-            status_name = status['name']
-            if status_name == 'Open':
-                contains_open = True
-    # After iterating through all columns and the 'Open' status was never found,
-    # use the first column as the default lead time start state
-    if not contains_open:
-        default_state = first_column
-
-    return default_state
-
-
-def find_default_end_state(columns):
-    default_state = 'Pseudo End State'
-    contains_closed = False
-    for column in reversed(columns):
-        state = column['name']
-        for status in column['mappedStatuses']:
-            status_name = status['name']
-            if status_name == 'Closed':
-                contains_closed = True
-                break
-        if contains_closed:
-            default_state = state
-            return default_state
-
-    return default_state
-
-
-class ApiResponseError(Exception):
-    def __init__(self, status_code, body):
-        self.status_code = status_code
-        self.body = body
-
-
-def api_response_handler(method, args):
-    try:
-        return method(args)
-    except ApiResponseError as api_error_response:
-        return response_formatter(status_code=api_error_response.status_code,
-                                  body=api_error_response.body)
+from source.web_api.utils.api_response_helper import ApiResponseError
+from source.web_api.utils.api_response_helper import api_response_handler
+from source.web_api.utils.api_response_helper import response_formatter
 
 
 def handler(event, context):
@@ -164,7 +96,7 @@ def __validate_user_input(event):
             project_name=project_name,
             board_name=board_name,
             git_repos=git_repos)
-    except:
+    except Exception:
         payload = {'message': 'Invalid user input'}
         raise ApiResponseError(status_code='404', body=payload)
 
@@ -172,7 +104,7 @@ def __validate_user_input(event):
 def __parse_team_id_from_url(event):
     try:
         return event.get('pathParameters').get('id')
-    except:
+    except Exception:
         payload = {"message": "Could not get id path parameter"}
         raise ApiResponseError(status_code='400', body=payload)
 
@@ -185,7 +117,8 @@ def __validate_project_name(project_name):
         if project_exists:
             payload = {'message': 'Project name already exists'}
             raise ApiResponseError(status_code='400', body=payload)
-    except:
+    except Exception:
+        redshift.closeConnection()
         payload = {'message': 'Internal error'}
         raise ApiResponseError(status_code='500', body=payload)
     finally:
@@ -208,7 +141,7 @@ def __fetch_board_id(board_name):
             else:
                 payload = {'message': 'Jira Board Name: {} is missing board_id'.format(board_name)}
                 raise ApiResponseError(status_code='500', body=payload)
-    except:
+    except Exception:
         payload = {'message': 'Jira Board Name: {} cannot be found'.format(board_name)}
         raise ApiResponseError(status_code='404', body=payload)
 
@@ -220,9 +153,50 @@ def __validate_git_repositories(git_repos):
             r = requests.get(GITHUB_API, headers={'Authorization': 'token %s' % git_etl_constants.GIT_API_KEY})
             if r.status_code != 200:
                 raise Exception
-    except:
+    except Exception:
         payload = {'message': 'Git Repository Names: {} cannot be found'.format([str(i) for i in git_repos])}
         raise ApiResponseError(status_code='404', body=payload)
+
+
+def __find_default_start_state(columns):
+    default_state = ''
+    first_column = ''
+    contains_open = False
+    for index, column in enumerate(columns):
+        state = column['name']
+        if index == 0:
+            first_column = state
+        if contains_open:
+            # If open status was found in the previous state, return current state
+            default_state = state
+            return default_state
+        for status in column['mappedStatuses']:
+            status_name = status['name']
+            if status_name == 'Open':
+                contains_open = True
+    # After iterating through all columns and the 'Open' status was never found,
+    # use the first column as the default lead time start state
+    if not contains_open:
+        default_state = first_column
+
+    return default_state
+
+
+def __find_default_end_state(columns):
+    default_state = 'Pseudo End State'
+    contains_closed = False
+    for column in reversed(columns):
+        state = column['name']
+        for status in column['mappedStatuses']:
+            status_name = status['name']
+            if status_name == 'Closed':
+                contains_closed = True
+                break
+        if contains_closed:
+            default_state = state
+            return default_state
+
+    return default_state
 
 
 class FullyQualifiedBoardConfiguration:
@@ -237,8 +211,8 @@ def __fetch_board_configurations(board_id):
     try:
         JIRA_BOARD_CONFIG_API = web_api_constants.CONFIG_API_URL.format(jira_etl_constants.JIRA_BASE_URL, board_id)
         board_config = requests.get(JIRA_BOARD_CONFIG_API, auth=(jira_etl_constants.JIRA_USERNAME, jira_etl_constants.JIRA_PASSWORD)).json()
-        default_start_state = find_default_start_state(board_config['rapidListConfig']['mappedColumns'])
-        default_end_state = find_default_end_state(board_config['rapidListConfig']['mappedColumns'])
+        default_start_state = __find_default_start_state(board_config['rapidListConfig']['mappedColumns'])
+        default_end_state = __find_default_end_state(board_config['rapidListConfig']['mappedColumns'])
 
         main_query = board_config['filterConfig']['query']
         sub_query = board_config['subqueryConfig']['subqueries'][0]['query']
@@ -257,7 +231,7 @@ def __fetch_board_configurations(board_id):
                                                 default_end_state=default_end_state,
                                                 issue_filter=issue_filter)
 
-    except:
+    except Exception:
         payload = {'message': 'Service unavailable'}
         raise ApiResponseError(status_code='503', body=payload)
 
@@ -279,6 +253,7 @@ def __create_team_project(project_name,
                                    default_start_state, default_end_state, rolling_time_window_days,
                                    include_subtasks, excluded_issue_types_string)
     except Exception as e:
+        redshift.closeConnection()
         payload = {'message': 'Failed to insert {} into team_project {}'.format(project_name, e)}
         raise ApiResponseError(status_code='500', body=payload)
     finally:
@@ -291,6 +266,7 @@ def __fetch_project_id(project_name):
     try:
         project_id = redshift.getProjectId(project_name)
     except Exception as e:
+        redshift.closeConnection()
         payload = {'message': 'Failed to get project id with name {}: {}'.format(project_name, e)}
         raise ApiResponseError(status_code='500', body=payload)
     finally:
@@ -305,11 +281,11 @@ def __create_status_and_work_state_entries(board_config, default_end_state, pseu
     seq_number = 0
     try:
         for column in board_config['rapidListConfig']['mappedColumns']:
-            state = str(column['name']) # convert unicode string to regular string
+            state = str(column['name'])  # convert unicode string to regular string
             work_state_values.append((project_id, state, seq_number))
             seq_number += 1
             for status in column['mappedStatuses']:
-                status_name = str(status['name']) # convert unicode string to regular string
+                status_name = str(status['name'])  # convert unicode string to regular string
                 status_state_values.append((project_id, status_name, state))
 
         # Board requires additional pseudo kanban column to map closed tickets if originally unmapped from all columns
@@ -321,6 +297,7 @@ def __create_status_and_work_state_entries(board_config, default_end_state, pseu
         redshift.updateTeamStatusStates(project_id, status_state_values)
         redshift.updateTeamWorkStates(project_id, work_state_values)
     except Exception as e:
+        redshift.closeConnection()
         payload = {'message': 'Failed to insert into team_work_states and team_status_states table {}'.format(e)}
         raise ApiResponseError(status_code='500', body=payload)
     finally:
@@ -335,6 +312,7 @@ def __create_entries_in_team_repo(git_repos, project_id):
             insert_repo_list.append((project_id, repo))
         redshift.updateTeamRepos(project_id, insert_repo_list)
     except Exception as e:
+        redshift.closeConnection()
         payload = {'message': 'Failed to insert into team_repo table {}'.format(e)}
         raise ApiResponseError(status_code='500', body=payload)
     finally:
