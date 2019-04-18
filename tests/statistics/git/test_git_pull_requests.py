@@ -10,7 +10,7 @@ class GitPullRequestsTest(unittest.TestCase):
     @mock_lambda
     def test_invoke_request_response(self):
         """ Confirm zip package includes all required library and can be invoked successfully """
-        ENV = os.environ['ENV']
+        ENV = os.environ['VGER_ENV']
         ssm_base = os.environ["VGER_SSM_BASE"]
         ssm_client = boto3.client('ssm')
 
