@@ -8,3 +8,6 @@ _build
 source/webpage/shared/constants.js
 source/webpage/reports/node_modules
 source/webpage/reports/build
+source/git_etl/node_modules
+source/jira_etl/node_modules
+source/web_api/node_modules
