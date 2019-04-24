@@ -253,6 +253,18 @@ class RedshiftConnection(object):
         result = self.cur.fetchone()
         return result[0]
 
+    def fetch_teams(self):
+        query = "SELECT * FROM team"
+        self.cur.execute(query)
+        self.conn.commit()
+        return self.cur.fetchall()
+
+    def fetch_team_by_name(self, team_name):
+        query = "SELECT * FROM team WHERE name = %s"
+        self.cur.execute(query, (team_name,))
+        self.conn.commit()
+        return self.cur.fetchall()
+
     def getTeamId(self, teamName):
         '''
         rtype: int
