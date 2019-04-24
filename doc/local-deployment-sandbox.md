@@ -16,7 +16,7 @@ from [HearthSim](https://github.com/HearthSim) to emulate [Amazon Redshift](http
 
 * `docker pull hearthsim/pgredshift`
 
-* `docker run -d --name test-redshift -p 5432 hearthsim/pgredshift`
+* `docker run -d --name test-redshift -p 5432:5432 hearthsim/pgredshift`
     * TODO - Right now, the local configs are hardcoded. These should be configurable
         * docker container name
         * database name
