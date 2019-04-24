@@ -6,6 +6,7 @@ bv-vger.iml
 env
 _build
 source/webpage/shared/constants.js
+source/webpage/shared/react_constants.js
 source/webpage/reports/node_modules
 source/webpage/reports/build
 source/git_etl/node_modules
