@@ -2,9 +2,6 @@
  *  Controller for the metrics page
  *  Handles input forms and rendering google chart
  */
-
-import * as constants from "../../shared/constants.js"
-
 (function () {
     'use strict';
 
@@ -1242,7 +1239,7 @@ import * as constants from "../../shared/constants.js"
                 boardIDPromise.then(function (responseID) {
                     $window.sessionStorage.selectedBoardID = responseID["data"]["board_id"];
                     let linkDOM = document.getElementById("JIRA-Link");
-                    let link = constants.JIRA_HOST_URL + '/secure/RapidBoard.jspa?rapidView=' + responseID["data"]['board_id'];
+                    let link = $rootScope.JIRA_HOST_URL + '/secure/RapidBoard.jspa?rapidView=' + responseID["data"]['board_id'];
                     linkDOM.setAttribute("href", link);
                     buildNewURL();
                 });
@@ -1263,11 +1260,11 @@ import * as constants from "../../shared/constants.js"
             assignLink(document.getElementById("quadrant_1_link"), $rootScope.THROUGHPUT_README);
             assignLink(document.getElementById("quadrant_3_link"), $rootScope.THROUGHPUT_VARIATION_README);
             assignLink(document.getElementById("quadrant_4_link"), $rootScope.LEADTIMES_README);
-            assignLink(document.getElementById("jira_support_project_url"), constants.JIRA_SUPPORT_URL);
-            assignLink(document.getElementById("jira_support_project_url2"), constants.JIRA_SUPPORT_URL);
-            assignLink(document.getElementById("jira_support_project_url3"), constants.JIRA_SUPPORT_URL);
-            assignLink(document.getElementById("jira_support_project_url4"), constants.JIRA_SUPPORT_URL);
-            assignLink(document.getElementById("jira_support_project_url5"), constants.JIRA_SUPPORT_URL);
+            assignLink(document.getElementById("jira_support_project_url"), $rootScope.JIRA_SUPPORT_URL);
+            assignLink(document.getElementById("jira_support_project_url2"), $rootScope.JIRA_SUPPORT_URL);
+            assignLink(document.getElementById("jira_support_project_url3"), $rootScope.JIRA_SUPPORT_URL);
+            assignLink(document.getElementById("jira_support_project_url4"), $rootScope.JIRA_SUPPORT_URL);
+            assignLink(document.getElementById("jira_support_project_url5"), $rootScope.JIRA_SUPPORT_URL);
         }
 
         function updateWebpageConstants() {

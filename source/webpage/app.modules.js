@@ -19,7 +19,6 @@
         'ngSanitize',
         'ngCsv',
         'vgerRouter',
-        'vgerConstants',
         'componentConstants',
         'vgerMetricsController',
         'vgerMetricsService',

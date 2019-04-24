@@ -1,9 +1,6 @@
 /*
  *  Controller for the editWorkStates.html, editWorkTypes.html and editProject.html
  */
-
-import Main from "../../reports/src/main";
-
 (function(){
     'use strict';
 
@@ -98,7 +95,7 @@ import Main from "../../reports/src/main";
         view_model.resetToBoard = resetToBoard;
         view_model.resetJQLToBoard = resetJQLToBoard;
 
-        Main.loading = false;
+        view_model.loading = false;
         getSessionScope();
         getConfiguration();
 
@@ -522,7 +519,7 @@ import Main from "../../reports/src/main";
         }
         
         function updateProjectSettings() {
-            Main.loading = true;
+            view_model.loading = true;
             updateIssues();
         }
         
@@ -548,7 +545,7 @@ import Main from "../../reports/src/main";
                     console.log(errorResponse);
                     warningToast(errorResponse['data']['message']);
                 }).then(function(){
-                    Main.loading = false;
+                    view_model.loading = false;
                 });
             }
         }
@@ -574,7 +571,7 @@ import Main from "../../reports/src/main";
         }
         
         function updateWorkTypes() {
-            Main.loading = true;
+            view_model.loading = true;
             if(view_model.selectedProject) {
                 // Build POST data body
                 let workTypePostBody = {};
@@ -595,13 +592,13 @@ import Main from "../../reports/src/main";
                     console.log(errorResponse);
                     warningToast(errorResponse['data']['message']);
                 }).then(function() {
-                    Main.loading = false;
+                    view_model.loading = false;
                 });
             }
         }
         
         function resetToBoard() {
-            Main.loading = true;
+            view_model.loading = true;
             var promiseBoardWorkStatesConfiguration = configurationsService.getBoardWorkStatesConfiguration(view_model.selectedProject.id);
             promiseBoardWorkStatesConfiguration.then(function(response) {
                 if (response['status'] === '200') {
@@ -640,12 +637,12 @@ import Main from "../../reports/src/main";
                 console.log(errorResponse);
                 warningToast(errorResponse['data']['message']);
             }).then(function() {
-                Main.loading = false;
+                view_model.loading = false;
             });
         }
         
         function updateWorkStates() {
-            Main.loading = true;
+            view_model.loading = true;
             if(view_model.selectedProject) {
                 // Build POST data body
                 let workStates = [];
@@ -687,7 +684,7 @@ import Main from "../../reports/src/main";
                     console.log(errorResponse);
                     warningToast(errorResponse['data']['message']);
                 }).then(function() {
-                    Main.loading = false;
+                    view_model.loading = false;
                 });
             }
         }

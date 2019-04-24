@@ -2,8 +2,6 @@
  * Service to handle API requests made from metricsController
  */
 
-import * as constants from "../../shared/constants.js"
-
 (function () {
     'use strict';
 
@@ -34,7 +32,7 @@ import * as constants from "../../shared/constants.js"
         };
 
         function getWorkStates(selectedWorkTypes, selectedProjectId, days, dateSince, dateUntil) {
-            let workStatesAPIStr = constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/' + 'workstates?';
+            let workStatesAPIStr = $rootScope.API_GATEWAY_URL + '/project/' + selectedProjectId + '/' + 'workstates?';
             return $http({
                 method: 'GET',
                 url: encodeURI(workStatesAPIStr)
@@ -45,7 +43,7 @@ import * as constants from "../../shared/constants.js"
         function getBoardID(boardName) {
             return $http({
                 method: 'GET',
-                url: encodeURI(constants.API_GATEWAY_URL + '/board/id/?boardName=' + boardName)
+                url: encodeURI($rootScope.API_GATEWAY_URL + '/board/id/?boardName=' + boardName)
             });
         }
 
@@ -53,13 +51,13 @@ import * as constants from "../../shared/constants.js"
         function getJiraIssueConfiguration(projectId) {
             return $http({
                 method: 'GET',
-                url: encodeURI(constants.API_GATEWAY_URL + '/project/' + projectId + '/issues')
+                url: encodeURI($rootScope.API_GATEWAY_URL + '/project/' + projectId + '/issues')
             });
         }
 
         function getLeadTimeData(selectedWorkTypes, selectedProjectId, days, dateSince, dateUntil) {
             let workTypeStr = selectedWorkTypes.join();
-            let leadTimeAPIStr = constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/leadtime?';
+            let leadTimeAPIStr = $rootScope.API_GATEWAY_URL + '/project/' + selectedProjectId + '/leadtime?';
 
             if (workTypeStr !== '') leadTimeAPIStr += '&workTypes=' + workTypeStr;
             if (days) leadTimeAPIStr += '&days=' + days;
@@ -75,7 +73,7 @@ import * as constants from "../../shared/constants.js"
         function getThroughputStatisticsData(selectedWorkTypes, selectedProjectId, days, dateSince, dateUntil) {
             let workTypeStr = selectedWorkTypes.join();
             let statisticsStr = 'statistics';
-            let statisticsAPIStr = constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/throughput/' + statisticsStr + '?';
+            let statisticsAPIStr = $rootScope.API_GATEWAY_URL + '/project/' + selectedProjectId + '/throughput/' + statisticsStr + '?';
 
             if (workTypeStr !== '') statisticsAPIStr += '&workTypes=' + workTypeStr;
             if (days) statisticsAPIStr += '&days=' + days;
@@ -91,7 +89,7 @@ import * as constants from "../../shared/constants.js"
         function getThroughputHistoryData(selectedWorkTypes, selectedProjectId, days, dateSince, dateUntil) {
             let workTypeStr = selectedWorkTypes.join();
             let historyStr = 'history';
-            let historyAPIStr = constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/throughput/' + historyStr + '?';
+            let historyAPIStr = $rootScope.API_GATEWAY_URL + '/project/' + selectedProjectId + '/throughput/' + historyStr + '?';
 
             if (workTypeStr !== '') historyAPIStr += '&workTypes=' + workTypeStr;
             if (days) historyAPIStr += '&days=' + days;
@@ -105,7 +103,7 @@ import * as constants from "../../shared/constants.js"
         }
 
         function getThroughputGitRepoData(selectedWorkTypes, selectedProjectId, days, dateSince, dateUntil) {
-            let gitRepoAPIStr = constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/repos?';
+            let gitRepoAPIStr = $rootScope.API_GATEWAY_URL + '/project/' + selectedProjectId + '/repos?';
             return $http({
                 method: 'GET',
                 url: encodeURI(gitRepoAPIStr)
@@ -113,7 +111,7 @@ import * as constants from "../../shared/constants.js"
         }
 
         function getThroughputGitTagData(selectedWorkTypes, selectedProjectId, days, dateSince, dateUntil) {
-            let gitTagAPIStr = constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/tags?';
+            let gitTagAPIStr = $rootScope.API_GATEWAY_URL + '/project/' + selectedProjectId + '/tags?';
 
             if (days) gitTagAPIStr += '&days=' + days;
             if (dateSince) gitTagAPIStr += '&dateSince=' + dateSince;
@@ -127,7 +125,7 @@ import * as constants from "../../shared/constants.js"
 
         function getVelocityData(selectedWorkTypes, selectedProjectId, days, dateSince, dateUntil) {
             let workTypeStr = selectedWorkTypes.join();
-            let backlogHistoryAPIStr = constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/backlog/?';
+            let backlogHistoryAPIStr = $rootScope.API_GATEWAY_URL + '/project/' + selectedProjectId + '/backlog/?';
 
             if (workTypeStr !== '') backlogHistoryAPIStr += '&workTypes=' + workTypeStr;
             if (days) backlogHistoryAPIStr += '&days=' + days;
@@ -142,7 +140,7 @@ import * as constants from "../../shared/constants.js"
 
         function getPredictabilityData(selectedWorkTypes, selectedProjectId, days, dateSince, dateUntil) {
             let workTypeStr = selectedWorkTypes.join();
-            let predictabilityAPIStr = constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/throughput/predictability?';
+            let predictabilityAPIStr = $rootScope.API_GATEWAY_URL + '/project/' + selectedProjectId + '/throughput/predictability?';
 
             if (workTypeStr !== '') predictabilityAPIStr += '&workTypes=' + workTypeStr;
             if (days) predictabilityAPIStr += '&days=' + days;
@@ -157,7 +155,7 @@ import * as constants from "../../shared/constants.js"
 
         function getPRHistoryData(repoNameList, selectedProjectId, days, dateSince, dateUntil) {
             let historyStr = 'history';
-            let historyAPIStr = constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/prs/throughput/' + historyStr + '?';
+            let historyAPIStr = $rootScope.API_GATEWAY_URL + '/project/' + selectedProjectId + '/prs/throughput/' + historyStr + '?';
 
             if (days) historyAPIStr += '&days=' + days;
             if (dateSince) historyAPIStr += '&dateSince=' + dateSince;
@@ -172,7 +170,7 @@ import * as constants from "../../shared/constants.js"
 
         function getPRStatisticsData(repoNameList, selectedProjectId, days, dateSince, dateUntil) {
             let statisticsStr = 'statistics';
-            let statisticsAPIStr = constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/prs/throughput/' + statisticsStr + '?';
+            let statisticsAPIStr = $rootScope.API_GATEWAY_URL + '/project/' + selectedProjectId + '/prs/throughput/' + statisticsStr + '?';
 
             if (days) statisticsAPIStr += '&days=' + days;
             if (dateSince) statisticsAPIStr += '&dateSince=' + dateSince;
@@ -188,7 +186,7 @@ import * as constants from "../../shared/constants.js"
         function getPRPredictabilityData(repoNameList, selectedProjectId, days, dateSince, dateUntil) {
             let predictabilityStr = 'predictability';
             let predictabilityAPIStr =
-                constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/prs/throughput/' + predictabilityStr + '?';
+                $rootScope.API_GATEWAY_URL + '/project/' + selectedProjectId + '/prs/throughput/' + predictabilityStr + '?';
 
             if (days) predictabilityAPIStr += '&days=' + days;
             if (dateSince) predictabilityAPIStr += '&dateSince=' + dateSince;
@@ -204,7 +202,7 @@ import * as constants from "../../shared/constants.js"
         function getPRLeadtimeData(repoNameList, selectedProjectId, days, dateSince, dateUntil) {
             let leadtimeStr = 'leadtime';
             let leadtimeAPIStr =
-                constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/prs/' + leadtimeStr + "?";
+                $rootScope.API_GATEWAY_URL + '/project/' + selectedProjectId + '/prs/' + leadtimeStr + "?";
 
             if (days) leadtimeAPIStr += '&days=' + days;
             if (dateSince) leadtimeAPIStr += '&dateSince=' + dateSince;
@@ -220,7 +218,7 @@ import * as constants from "../../shared/constants.js"
         function getPRBacklogData(repoNameList, selectedProjectId, days, dateSince, dateUntil) {
             let backlogStr = 'backlog';
             let backlogAPIStr =
-                constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/prs/' + backlogStr + "?";
+                $rootScope.API_GATEWAY_URL + '/project/' + selectedProjectId + '/prs/' + backlogStr + "?";
 
             if (days) backlogAPIStr += '&days=' + days;
             if (dateSince) backlogAPIStr += '&dateSince=' + dateSince;
@@ -235,9 +233,9 @@ import * as constants from "../../shared/constants.js"
     }
 
     // Handles form input and retrieves info from AWS API gateway
-    metricsFilterService.$inject = ['$http'];
+    metricsFilterService.$inject = ['$http', '$rootScope'];
 
-    function metricsFilterService($http) {
+    function metricsFilterService($http, $rootScope) {
         return {
             getTeams: getTeams,
             getProjects: getProjects,
@@ -249,7 +247,7 @@ import * as constants from "../../shared/constants.js"
         function getTeams() {
             return $http({
                 method: 'GET',
-                url: encodeURI(constants.API_GATEWAY_URL + '/team/')
+                url: encodeURI($rootScope.API_GATEWAY_URL + '/team/')
             });
         }
 
@@ -258,7 +256,7 @@ import * as constants from "../../shared/constants.js"
         function getProjects(teamId) {
             return $http({
                 method: 'GET',
-                url: encodeURI(constants.API_GATEWAY_URL + '/team/' + teamId + '/' + 'project/')
+                url: encodeURI($rootScope.API_GATEWAY_URL + '/team/' + teamId + '/' + 'project/')
             });
         }
 
@@ -267,7 +265,7 @@ import * as constants from "../../shared/constants.js"
         function getWorkTypes(projectId) {
             return $http({
                 method: 'GET',
-                url: encodeURI(constants.API_GATEWAY_URL + '/project/' + projectId + '/worktypes/')
+                url: encodeURI($rootScope.API_GATEWAY_URL + '/project/' + projectId + '/worktypes/')
             });
         }
     }

@@ -2,8 +2,6 @@
 //CONSTANTS
 //These are the fiscal quarter end dates for bazaarvoice that are used in quarterly reports.
 //If your company has different quarterly end dates, you can modify them here
-import {JIRA_HOST_URL} from "../../shared/constants";
-
 const QUARTER_DATES_ORGANIZED = ["1/31", "4/30", "7/31", "10/31"];
 
 //if arranged chronologically by quarter, optimizes loop that assigns it
@@ -146,7 +144,7 @@ const LEAD_TIME_COLUMNS = [
   }     
 ];
 
-import * as shared_constants from '../../shared/constants.js';
+import * as react_constants from '../../shared/react_constants.js';
 
 let constants = {
   QUARTER_DATES_ORGANIZED: QUARTER_DATES_ORGANIZED,
@@ -155,8 +153,8 @@ let constants = {
   THROUGHPUT_OPTIONS: THROUGHPUT_OPTIONS,
   LEAD_TIME_COLUMNS: LEAD_TIME_COLUMNS,
   LEAD_TIME_OPTIONS: LEAD_TIME_OPTIONS,
-  JIRA_URL: shared_constants.JIRA_HOST_URL,
-  API_GATEWAY_URL: shared_constants.API_GATEWAY_URL,
+  JIRA_URL: react_constants.JIRA_HOST_URL,
+  API_GATEWAY_URL: react_constants.API_GATEWAY_URL,
 };
 
 //--------------------------------—--------------------------------—--------------------------------—//

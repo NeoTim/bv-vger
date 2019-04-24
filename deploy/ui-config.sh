@@ -47,8 +47,44 @@ cd ${bindir}/..
 ui_src_path=source/webpage
 config_file_name=constants.js
 config_src_path=${ui_src_path}/shared/${config_file_name}
+react_config_file_name=react_constants.js
+react_config_src_path=${ui_src_path}/shared/${react_config_file_name}
 
 cat > ${config_src_path} << EOL
+/*
+ * Global constants
+ * This is generated JavaScript to be used by the statically hosted web portions of the Vger codebase
+ * !!!!!!!!!!NOTHING SECURE SHOULD EVER BE IN THIS FILE!!!!!!!!!!
+ * All of this JavaScript will by visible by any user who has access to the Vger UI
+ */
+(function(){
+    'use strict';
+
+    angular.module('componentConstants', [])
+        .service('constantsService', constantsService);
+
+    constantsService.\$inject = ['\$rootScope'];
+
+    function constantsService(\$rootScope){
+
+        const API_GATEWAY_URL = '${api_gateway}';
+        const JIRA_HOST_URL = '${jira_url}';
+        const JIRA_SUPPORT_URL = '${support_url}';
+
+        return {
+            setRootScopeConstants: setRootScopeConstants
+        };
+
+        function setRootScopeConstants(){
+            \$rootScope.API_GATEWAY_URL = API_GATEWAY_URL;
+            \$rootScope.JIRA_HOST_URL = JIRA_HOST_URL;
+            \$rootScope.JIRA_SUPPORT_URL = JIRA_SUPPORT_URL;
+        }
+    }
+})();
+EOL
+
+cat > ${react_config_src_path} << EOL
 /*
  * Global constants
  * This is generated JavaScript to be used by the statically hosted web portions of the Vger codebase
@@ -60,7 +96,8 @@ const API_GATEWAY_URL = '${api_gateway}';
 const JIRA_HOST_URL = '${jira_url}';
 const JIRA_SUPPORT_URL = '${support_url}';
 
-export {API_GATEWAY_URL, JIRA_HOST_URL, JIRA_SUPPORT_URL};
+export {API_GATEWAY_URL, JIRA_HOST_URL};
+export default JIRA_SUPPORT_URL;
 EOL
 
 # Return the generated config file path

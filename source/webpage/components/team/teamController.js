@@ -1,5 +1,3 @@
-import * as constants from "../../shared/constants";
-
 (function () {
     'use strict';
 
@@ -45,7 +43,7 @@ import * as constants from "../../shared/constants";
             link.href = $rootScope.VGER_GUIDE;
 
             link = document.getElementById("add_team_link");
-            link.href = constants.API_GATEWAY_URL + '/team';
+            link.href = $rootScope.API_GATEWAY_URL + '/team';
         }
 
         // Get list of teams

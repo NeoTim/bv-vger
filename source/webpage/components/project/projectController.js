@@ -1,5 +1,3 @@
-import * as constants from "../../shared/constants.js"
-
 (function () {
     'use strict';
 
@@ -44,7 +42,7 @@ import * as constants from "../../shared/constants.js"
             link.href = $rootScope.VGER_GUIDE;
 
             link = document.getElementById("add_project_link");
-            link.href = constants.API_GATEWAY_URL + '/team/' + id +'/project/';
+            link.href = $rootScope.API_GATEWAY_URL + '/team/' + id +'/project/';
         }
 
         function getMetrics(id, name) {

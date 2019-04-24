@@ -2,9 +2,6 @@
  * Service to handle API requests made from configurationsController
  * Create, update, retrieve configuration info from db
  */
-
-import * as constants from '../../shared/constants.js';
-
 (function () {
     'use strict';
 
@@ -38,7 +35,7 @@ import * as constants from '../../shared/constants.js';
         function getTeams() {
             return $http({
                 method: 'GET',
-                url: encodeURI(constants.API_GATEWAY_URL + '/team/')
+                url: encodeURI($rootScope.API_GATEWAY_URL + '/team/')
             });
         }
 
@@ -46,7 +43,7 @@ import * as constants from '../../shared/constants.js';
         function getProjects(teamId) {
             return $http({
                 method: 'GET',
-                url: encodeURI(constants.API_GATEWAY_URL + '/team/' + teamId + '/project/')
+                url: encodeURI($rootScope.API_GATEWAY_URL + '/team/' + teamId + '/project/')
             });
         }
 
@@ -54,7 +51,7 @@ import * as constants from '../../shared/constants.js';
         function getJiraIssueConfiguration(projectId) {
             return $http({
                 method: 'GET',
-                url: encodeURI(constants.API_GATEWAY_URL + '/project/' + projectId + '/issues')
+                url: encodeURI($rootScope.API_GATEWAY_URL + '/project/' + projectId + '/issues')
             });
         }
 
@@ -62,7 +59,7 @@ import * as constants from '../../shared/constants.js';
         function getJiraWorkTypesConfiguration(projectId) {
             return $http({
                 method: 'GET',
-                url: encodeURI(constants.API_GATEWAY_URL + '/project/' + projectId + '/worktypes')
+                url: encodeURI($rootScope.API_GATEWAY_URL + '/project/' + projectId + '/worktypes')
             });
         }
 
@@ -70,7 +67,7 @@ import * as constants from '../../shared/constants.js';
         function getJiraWorkStatesConfiguration(projectId) {
             return $http({
                 method: 'GET',
-                url: encodeURI(constants.API_GATEWAY_URL + '/project/' + projectId + '/workstates')
+                url: encodeURI($rootScope.API_GATEWAY_URL + '/project/' + projectId + '/workstates')
             });
         }
 
@@ -78,7 +75,7 @@ import * as constants from '../../shared/constants.js';
         function getBoardWorkStatesConfiguration(projectId) {
             return $http({
                 method: 'GET',
-                url: encodeURI(constants.API_GATEWAY_URL + '/project/' + projectId + '/boardworkstates')
+                url: encodeURI($rootScope.API_GATEWAY_URL + '/project/' + projectId + '/boardworkstates')
             });
         }
 
@@ -86,7 +83,7 @@ import * as constants from '../../shared/constants.js';
         function getGitConfiguration(projectId) {
             return $http({
                 method: 'GET',
-                url: encodeURI(constants.API_GATEWAY_URL + '/project/' + projectId + '/repos')
+                url: encodeURI($rootScope.API_GATEWAY_URL + '/project/' + projectId + '/repos')
             });
         }
 
@@ -94,7 +91,7 @@ import * as constants from '../../shared/constants.js';
         function getIssueFilter(jql) {
             return $http({
                 method: 'GET',
-                url: encodeURI(constants.API_GATEWAY_URL + '/issues/filter?jql=' + jql)
+                url: encodeURI($rootScope.API_GATEWAY_URL + '/issues/filter?jql=' + jql)
             });
         }
 
@@ -102,7 +99,7 @@ import * as constants from '../../shared/constants.js';
         function getBoardJQL(board_name) {
             return $http({
                 method: 'GET',
-                url: encodeURI(constants.API_GATEWAY_URL + '/board?boardName=' + board_name)
+                url: encodeURI($rootScope.API_GATEWAY_URL + '/board?boardName=' + board_name)
             });
         }
 
@@ -110,7 +107,7 @@ import * as constants from '../../shared/constants.js';
         function createTeam(teamName) {
             return $http({
                 method: 'POST',
-                url: encodeURI(constants.API_GATEWAY_URL + '/team/'),
+                url: encodeURI($rootScope.API_GATEWAY_URL + '/team/'),
                 data: {
                     name: teamName
                 }
@@ -121,7 +118,7 @@ import * as constants from '../../shared/constants.js';
         function createProject(teamId, projectName, boardName, issueKeys, repoNames) {
             return $http({
                 method: 'POST',
-                url: encodeURI(constants.API_GATEWAY_URL + '/team/' + teamId + '/project'),
+                url: encodeURI($rootScope.API_GATEWAY_URL + '/team/' + teamId + '/project'),
                 data: {
                     name: projectName,
                     issues: {
@@ -137,7 +134,7 @@ import * as constants from '../../shared/constants.js';
         function updateIssues(projectId, boardName, includeSubtasks, excludedIssueTypes, issueFilter, projectName) {
             return $http({
                 method: 'PUT',
-                url: encodeURI(constants.API_GATEWAY_URL + '/project/' + projectId + '/issues'),
+                url: encodeURI($rootScope.API_GATEWAY_URL + '/project/' + projectId + '/issues'),
                 data: {
                     boardName: boardName,
                     includeSubtasks: includeSubtasks,
@@ -151,7 +148,7 @@ import * as constants from '../../shared/constants.js';
         function updateRepos(projectId, repos) {
             return $http({
                 method: 'PUT',
-                url: encodeURI(constants.API_GATEWAY_URL + '/project/' + projectId + '/repos'),
+                url: encodeURI($rootScope.API_GATEWAY_URL + '/project/' + projectId + '/repos'),
                 data: repos
             });
         }
@@ -160,7 +157,7 @@ import * as constants from '../../shared/constants.js';
         function updateWorkTypes(projectId, workTypePostBody) {
             return $http({
                 method: 'PUT',
-                url: encodeURI(constants.API_GATEWAY_URL + '/project/' + projectId + '/worktypes'),
+                url: encodeURI($rootScope.API_GATEWAY_URL + '/project/' + projectId + '/worktypes'),
                 data: workTypePostBody
             });
         }
@@ -169,14 +166,14 @@ import * as constants from '../../shared/constants.js';
         function updateWorkStates(projectId, workStatePostBody) {
             return $http({
                 method: 'PUT',
-                url: encodeURI(constants.API_GATEWAY_URL + '/project/' + projectId + '/workstates'),
+                url: encodeURI($rootScope.API_GATEWAY_URL + '/project/' + projectId + '/workstates'),
                 data: workStatePostBody
             });
         }
 
         // Trigger ETL
         function projectETL(selectedProjectId, issue_type_etl) {
-            let APIStr = constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/etl';
+            let APIStr = $rootScope.API_GATEWAY_URL + '/project/' + selectedProjectId + '/etl';
             if (issue_type_etl) {
                 APIStr += "?issuetype=true";
             }
@@ -188,7 +185,7 @@ import * as constants from '../../shared/constants.js';
 
         // Get ETL status for specific project
         function etlStatus(selectedProjectId) {
-            let APIStr = constants.API_GATEWAY_URL + '/project/' + selectedProjectId + '/etl/status';
+            let APIStr = $rootScope.API_GATEWAY_URL + '/project/' + selectedProjectId + '/etl/status';
             return $http({
                 method: 'GET',
                 url: encodeURI(APIStr)

@@ -2,7 +2,6 @@ import React from 'react';
 import {Chart} from 'react-google-charts';
 
 import {constants} from './reportConstants.js';
-import * as shared_constants from '../../shared/constants.js';
 
 let i = 0;
 let j = 0;
