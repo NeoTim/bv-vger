@@ -2,7 +2,7 @@
 *.iml
 .idea/
 *.pyc
-*/venv/
+source/web_api/venv
 .serverless/
 env
 _build
