@@ -5,6 +5,7 @@ from source.jira_etl.constants import jira_etl_constants
 from utils.api_response_helper import ApiResponseError
 from utils.api_response_helper import response_formatter
 from utils.api_response_helper import api_response_handler
+from utils.jira_helper.JiraBoardConfiguration import JiraBoardConfiguration
 
 
 def find_default_start_state(work_states):
@@ -42,13 +43,6 @@ def find_default_end_state(work_states):
 
 def handler(event, context):
     return api_response_handler(__get_board_states, event)
-
-
-class JiraBoardConfiguration:
-    def __init__(self, lead_time_start_state, lead_time_end_state, work_states):
-        self.lead_time_start_state = lead_time_start_state
-        self.lead_time_end_state = lead_time_end_state
-        self.work_states = work_states
 
 
 def __get_board_states(event):
