@@ -4,9 +4,9 @@
     angular.module('vgerTeam', [])
         .controller('teamController', teamController);
 
-    teamController.$inject = ['$scope', '$location', '$rootScope', '$window', 'metricsFilterService', 'constantsService'];
+    teamController.$inject = ['$scope', '$location', '$rootScope', '$window', 'metricsFilterService', 'sharedConstantsService', 'constantsService'];
 
-    function teamController($scope, $location, $rootScope, $window, metricsFilterService, constantsService) {
+    function teamController($scope, $location, $rootScope, $window, metricsFilterService, sharedConstantsService,  constantsService) {
 
         let vm = this; // view-model
 
@@ -38,6 +38,7 @@
             if (!$rootScope.VGER_GUIDE) {
                 constantsService.setRootScopeConstants();
             }
+            sharedConstantsService.setRootScopeConstants();
 
             let link = document.getElementById("vger_guide_link");
             link.href = $rootScope.VGER_GUIDE;

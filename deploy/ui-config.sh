@@ -60,12 +60,12 @@ cat > ${config_src_path} << EOL
 (function(){
     'use strict';
 
-    angular.module('componentConstants', [])
-        .service('constantsService', constantsService);
+    angular.module('sharedConstants', [])
+        .service('sharedConstantsService', sharedConstantsService);
 
-    constantsService.\$inject = ['\$rootScope'];
+    sharedConstantsService.\$inject = ['\$rootScope'];
 
-    function constantsService(\$rootScope){
+    function sharedConstantsService(\$rootScope){
 
         const API_GATEWAY_URL = '${api_gateway}';
         const JIRA_HOST_URL = '${jira_url}';
