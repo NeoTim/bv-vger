@@ -23,7 +23,8 @@ package:
   individually: true
 
 plugins:
-  - serverless-package-python-functions  
+  - serverless-package-python-functions
+  - serverless-offline
 custom:
   pkgPyFuncs: 
     buildDir: _build
@@ -38,7 +39,7 @@ functions:
 
   vger-sls-team:
     name: vger-sls-team-${self:provider.stage}
-    handler: team.handler
+    handler: team/team.handler
     timeout: 300
     memorySize: 128
     package:
@@ -46,7 +47,8 @@ functions:
         - "./**"
       include:
         - ./team
-        - ./utils/constants        
+        - ./utils/constants
+        - ./utils/redshift_connection
       artifact: ${self:custom.pkgPyFuncs.buildDir}/${self:functions.vger-sls-team.name}.zip
     events:
       - http:
