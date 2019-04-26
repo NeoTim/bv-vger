@@ -233,9 +233,10 @@
     }
 
     // Handles form input and retrieves info from AWS API gateway
-    metricsFilterService.$inject = ['$http', '$rootScope'];
+    metricsFilterService.$inject = ['$http', '$rootScope', 'sharedConstantsService'];
 
-    function metricsFilterService($http, $rootScope) {
+    function metricsFilterService($http, $rootScope, sharedConstantsService) {
+        sharedConstantsService.setRootScopeConstants();
         return {
             getTeams: getTeams,
             getProjects: getProjects,
