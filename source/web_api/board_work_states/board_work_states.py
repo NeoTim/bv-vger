@@ -1,20 +1,10 @@
-import json
 import requests
-from source.web_api.utils.redshift_connection import RedshiftConnection
-from source.web_api.utils.constants import web_api_constants
+from utils.redshift_connection.redshift_connection import RedshiftConnection
+from utils.constants import web_api_constants
 from source.jira_etl.constants import jira_etl_constants
-
-
-def response_formatter(status_code='400', body={'message': 'error'}):
-    api_response = {
-        'statusCode': status_code,
-        'headers': {
-            'Access-Control-Allow-Origin' : '*',
-            'Access-Control-Allow-Credentials' : True
-        },
-        'body': json.dumps(body)
-    }
-    return api_response
+from utils.api_response_helper import ApiResponseError
+from utils.api_response_helper import response_formatter
+from utils.api_response_helper import api_response_handler
 
 
 def find_default_start_state(work_states):
@@ -51,26 +41,55 @@ def find_default_end_state(work_states):
 
 
 def handler(event, context):
-    # parse project_id from the URL
+    return api_response_handler(__get_board_states, event)
+
+
+class JiraBoardConfiguration:
+    def __init__(self, lead_time_start_state, lead_time_end_state, work_states):
+        self.lead_time_start_state = lead_time_start_state
+        self.lead_time_end_state = lead_time_end_state
+        self.work_states = work_states
+
+
+def __get_board_states(event):
+    project_id = __parse_product_id_from_input(event)
+    board_id = __fetch_board_id(project_id)
+    jira_board_configuration = __fetch_board_configuration(board_id)
+
+    payload = {
+        "defaultLeadTimeStartState": jira_board_configuration.lead_time_start_state,
+        "defaultLeadTimeEndState": jira_board_configuration.lead_time_end_state,
+        "workStates": jira_board_configuration.work_states
+    }
+
+    return response_formatter(status_code=200, body=payload)
+
+
+def __parse_product_id_from_input(lambda_input):
     try:
-        project_id = (event.get('pathParameters').get('id'))
-    except Exception as e:
+        return lambda_input.get('pathParameters').get('id')
+    except Exception:
         payload = {"message": "Could not get id path parameter"}
-        return response_formatter(status_code='400', body=payload)
+        raise ApiResponseError(status_code=400, body=payload)
 
-    pseudo_end_state_name = 'Pseudo End State'
-    work_states = []
 
-    # get board id
+def __fetch_board_id(project_id):
+    database = RedshiftConnection()
+    board_id = ""
     try:
-        redshift = RedshiftConnection()
-        board_id = redshift.getBoardId(project_id)
+        board_id = database.getBoardId(project_id)
         print(board_id)
-    except:
+    except Exception:
         payload = {'message': 'Internal error'}
-        return response_formatter(status_code='500', body=payload)
+        raise ApiResponseError(status_code=500, body=payload)
+    finally:
+        database.closeConnection()
+        return board_id
 
-    # connect to jira api and retrieve board configuration
+
+def __fetch_board_configuration(board_id):
+    work_states = []
+    pseudo_end_state_name = 'Pseudo End State'
     try:
         JIRA_BOARD_CONFIG_API = web_api_constants.CONFIG_URL.format(jira_etl_constants.JIRA_BASE_URL, board_id)
         board_config = requests.get(JIRA_BOARD_CONFIG_API, auth=(jira_etl_constants.JIRA_USERNAME, jira_etl_constants.JIRA_PASSWORD)).json()
@@ -89,27 +108,21 @@ def handler(event, context):
                 status_object = requests.get(status['self'], auth=(jira_etl_constants.JIRA_USERNAME, jira_etl_constants.JIRA_PASSWORD)).json()
                 state['status'].append(str(status_object['name']))  # convert unicode string to regular string
             work_states.append(state)
-            print(state)
 
-        default_lead_time_start_state = find_default_start_state(work_states)
-        default_lead_time_end_state = find_default_end_state(work_states)
-    except:
+        lead_time_start_state = find_default_start_state(work_states)
+        lead_time_end_state = find_default_end_state(work_states)
+
+        # Cover edge cases when projects do not use explicitly defined column for closed tickets
+        if lead_time_end_state == pseudo_end_state_name:
+            state = {
+                "name": pseudo_end_state_name,
+                "status": ["Closed"]
+            }
+            work_states.append(state)
+
+        return JiraBoardConfiguration(lead_time_start_state=lead_time_start_state,
+                                      lead_time_end_state=lead_time_end_state,
+                                      work_states=work_states)
+    except Exception:
         payload = {'message': 'Service unavailable'}
-        return response_formatter(status_code='503', body=payload)
-
-    # Cover edge cases when projects do not use explicitly defined column for closed tickets
-    if default_lead_time_end_state == pseudo_end_state_name:
-        state = {
-            "name": pseudo_end_state_name,
-            "status": ["Closed"]
-        }
-        work_states.append(state)
-        print(state)
-
-    payload = {
-        "defaultLeadTimeStartState": default_lead_time_start_state,
-        "defaultLeadTimeEndState": default_lead_time_end_state,
-        "workStates": work_states
-    }
-
-    return response_formatter(status_code='200', body=payload)
+        raise ApiResponseError(status_code=503, body=payload)
