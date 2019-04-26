@@ -4,11 +4,11 @@ import urllib
 import re
 from source.git_etl.constants import git_etl_constants
 from source.jira_etl.constants import jira_etl_constants
-from source.web_api.utils.redshift_connection.redshift_connection import RedshiftConnection
-from source.web_api.utils.constants import web_api_constants
-from source.web_api.utils.api_response_helper import ApiResponseError
-from source.web_api.utils.api_response_helper import api_response_handler
-from source.web_api.utils.api_response_helper import response_formatter
+from utils.redshift_connection.redshift_connection import RedshiftConnection
+from utils.constants import web_api_constants
+from utils.api_response_helper import ApiResponseError
+from utils.api_response_helper import api_response_handler
+from utils.api_response_helper import response_formatter
 
 
 def handler(event, context):
