@@ -2,7 +2,7 @@ from __future__ import print_function
 import psycopg2
 import time
 from psycopg2.extras import execute_values
-from source import common_constants
+from utils.constants import common_constants
 
 
 class RedshiftConnection(object):
