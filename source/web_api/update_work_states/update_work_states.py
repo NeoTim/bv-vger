@@ -1,57 +1,61 @@
 import json
-from redshift_connection import RedshiftConnection
+from utils.redshift_connection.redshift_connection import RedshiftConnection
+from utils.api_response_helper import ApiResponseError
+from utils.api_response_helper import response_formatter
+from utils.api_response_helper import api_response_handler
+from utils.jira_helper.JiraBoardConfiguration import JiraBoardConfiguration
 
-def response_formatter(status_code='400', body={'message': 'error'}):
-    api_response = {
-        'statusCode': status_code,
-        'headers': {
-            'Access-Control-Allow-Origin' : '*',
-            'Access-Control-Allow-Credentials' : True
-        },
-        'body': json.dumps(body)
-    }
-    return api_response
 
 def handler(event, context):
-    # Validate user input
-    try: 
+    return api_response_handler(__update_work_states, event)
+
+
+def __update_work_states(event):
+    board_configuration = __parse_lambda_input_for_jira_configuration(event)
+    project_id = __parse_project_id_from_input(event)
+    __apply_work_state_update(board_config=board_configuration, project_id=project_id)
+    return response_formatter(status_code='200', body={})
+
+
+def __parse_lambda_input_for_jira_configuration(lambda_input):
+    try:
         # User input
-        data = json.loads(event['body'])
-        work_states = data['workStates']
-        default_lead_time_start_state = data['defaultLeadTimeStartState']
-        default_lead_time_end_state = data['defaultLeadTimeEndState']
-    except:
+        data = json.loads(lambda_input['body'])
+        return JiraBoardConfiguration(work_states=data['workStates'],
+                                      lead_time_start_state=data['defaultLeadTimeStartState'],
+                                      lead_time_end_state=data['defaultLeadTimeEndState'])
+    except Exception:
         payload = {'message': 'Invalid user input'}
-        return response_formatter(status_code='400', body=payload)
-    
-    # Parse project_id from the URL
+        raise ApiResponseError(status_code=400, body=payload)
+
+
+def __parse_project_id_from_input(lambda_input):
     try:
-        project_id = (event.get('pathParameters').get('id'))
-    except:
+        return lambda_input.get('pathParameters').get('id')
+    except Exception:
         payload = {"message": "Could not get id path parameter"}
-        return response_formatter(status_code='400', body=payload)
-    
-    # Update work states
+        raise ApiResponseError(status_code=400, body=payload)
+
+
+def __apply_work_state_update(board_config, project_id):
+    database = RedshiftConnection()
     try:
-        status_state_values = [] # Values to insert in team_status_states table
-        work_state_values = []    # Vaues to insert in team_work_states table
-        seq_number = 0           # Sequence counter for team_work_states table
-        
-        for work_state in work_states:
+        status_state_values = []  # Values to insert in team_status_states table
+        work_state_values = []    # Values to insert in team_work_states table
+        seq_number = 0            # Sequence counter for team_work_states table
+
+        for work_state in board_config.work_states:
             for status in work_state['status']:
                 status_state_values.append((int(project_id), str(status), str(work_state['name'])))
-            
+
             work_state_values.append((int(project_id), str(work_state['name']), seq_number))
             seq_number += 1
-
-        redshift = RedshiftConnection()
-        redshift.updateTeamStatusStates(project_id, status_state_values)
-        redshift.updateTeamWorkStates(project_id, work_state_values)
-        redshift.updateDefaultLeadTimeStates(project_id, default_lead_time_start_state, default_lead_time_end_state)
-    except:
+        database.updateTeamStatusStates(project_id, status_state_values)
+        database.updateTeamWorkStates(project_id, work_state_values)
+        database.updateDefaultLeadTimeStates(project_id, board_config.lead_time_start_state, board_config.lead_time_end_state)
+    except Exception:
         payload = {'message': 'Internal error'}
-        return response_formatter(status_code='500', body=payload)
+        database.closeConnection()
+        raise ApiResponseError(status_code=500, body=payload)
     finally:
-        redshift.closeConnection()
-
-    return response_formatter(status_code='200', body={})
+        database.closeConnection()
